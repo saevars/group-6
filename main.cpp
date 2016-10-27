@@ -595,7 +595,7 @@ int main(int argc, char* argv[])
         printf("Error in step 6, checking alignment for database \n");
         exit(-1);
     }
-/*
+*/
 //--------------------------------------------------------------------  
     //----------------------------------------------------------------
     // STEP 6.3: Prepare Output array host and device
