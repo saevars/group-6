@@ -626,6 +626,25 @@ int main(int argc, char* argv[])
     timestamp_t cpend = get_timestamp();
     seconds = cpend - cpstart;
     //printf("Copy Time: %llu\n", seconds);
+
+    char *mulFileName, *mulBuffer;
+    mulFileName = "kernel.cl";
+    FILE *mulFile;
+    mulFile = fopen(mulFileName, "r");
+    if(mulFile == NULL){
+        printf("cannot open .cl file\n");
+        printf("current path: %s\n", mulFileName);
+        exit(-1);
+    }
+    fseek(mulFile, 0, SEEK_END);
+    size_t mulSize = ftell(mulFile);
+    rewind(mulFile);
+
+    // read kernel source into buffer
+    mulBuffer = (char*) malloc(mulSize + 1);
+    mulBuffer[mulSize] = '\0';
+    fread(mulBuffer, sizeof(char), mulSize, mulFile);
+    fclose(mulFile);
     
 //---------------------------------------------------------------------
     //-----------------------------------------------------------------
@@ -633,8 +652,32 @@ int main(int argc, char* argv[])
     //-----------------------------------------------------------------
         timestamp_t argsstart = get_timestamp();
 
-    
 
+    cl_program program = clCreateProgramWithSource(
+            context,
+            1,
+            (const char**) &mulBuffer,
+            &mulSize,
+            &status);
+    free(mulBuffer);
+
+
+    // Build (compile) the program for the devices with
+    // clBuildProgram()
+    const char options[] = "-cl-std=CL1.2";
+    status |= clBuildProgram(
+            program,
+            1,
+            &devices[device_id],
+            options,
+            NULL,
+            NULL);
+
+    if(status != CL_SUCCESS){
+        printf("%d\n", status);
+       // printf("error in step 6\n");
+        exit(-1);
+    }
     
 
 
@@ -642,8 +685,14 @@ int main(int argc, char* argv[])
     //-----------------------------------------------------------------
     // STEP 8: Create Kernel
     //-----------------------------------------------------------------
-    
-    
+
+    cl_kernel clKernel = NULL;
+
+    clKernel = clCreateKernel(program, "mul_kernel", &status);
+    if(status != CL_SUCCESS){
+        printf("error in step 7\n");
+        exit(-1);
+    }
     
 
 
@@ -651,12 +700,29 @@ int main(int argc, char* argv[])
     //-----------------------------------------------------------------
     // STEP 9: Set Kernel Arguments
     //-----------------------------------------------------------------
-    
 
 
+    status  = clSetKernelArg(
+            clKernel,
+            0,
+            sizeof(cl_mem),
+            &d_bufferQueryProfile);
+    status |= clSetKernelArg(
+            clKernel,
+            1,
+            sizeof(cl_mem),
+            &d_bufferBlobProfile);
+    status |= clSetKernelArg(
+            clKernel,
+            2,
+            sizeof(cl_mem),
+            &d_scores);
 
 
-
+    if(status != CL_SUCCESS){
+        printf("error in step 9\n");
+        exit(-1);
+    }
 
 
     timestamp_t argsend = get_timestamp();
