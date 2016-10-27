@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
     status |= clGetPlatformIDs(numPlatforms, platforms, NULL);
     
     if(status != CL_SUCCESS){
-        printf("error in step 1\n");
+        printf("ERROR (%s) in step 1\n", get_error_string(status));
         exit(-1);
     }
 
@@ -130,7 +130,7 @@ int main(int argc, char* argv[])
     int device_id = 0;
     
     if((status != CL_SUCCESS) || (device_id >= numDevices)){
-        printf("error in step 2\n");
+        printf("ERROR (%s) in step 2\n", get_error_string(status));
         exit(-1);
     }
 
@@ -153,7 +153,7 @@ int main(int argc, char* argv[])
                               &status);
     
     if(status != CL_SUCCESS){
-        printf("error in step 3\n");
+        printf("ERROR (%s) in step 3\n", get_error_string(status));
         exit(-1);
     }
 
@@ -177,7 +177,7 @@ int main(int argc, char* argv[])
                                     &status);
     
     if(status != CL_SUCCESS){
-        printf("error in step 4\n");
+        printf("ERROR (%s) in step 4\n", get_error_string(status));
         exit(-1);
     }
     
@@ -516,7 +516,7 @@ int main(int argc, char* argv[])
                                     &status);
     
     if(status != CL_SUCCESS){
-        printf("error in step 6, creating buffer for query profile \n");
+        printf("ERROR (%s) in step 6, creating buffer for query profile \n", get_error_string(status));
         exit(-1);
     }
     
@@ -532,7 +532,7 @@ int main(int argc, char* argv[])
                                    NULL);
 
     if(status != CL_SUCCESS){
-        printf("error in step 6, enqueue write buffer for query profile \n");
+        printf("ERROR (%s) in step 6, enqueue write buffer for query profile \n", get_error_string(status));
         exit(-1);
     }
   
@@ -558,7 +558,7 @@ int main(int argc, char* argv[])
             &status);
 
     if(status != CL_SUCCESS){
-        printf("error in step 6, creating buffer for database \n");
+        printf("ERROR (%s) in step 6, creating buffer for database \n", get_error_string(status));
         exit(-1);
     }
 
@@ -574,7 +574,7 @@ int main(int argc, char* argv[])
             NULL);
 
     if(status != CL_SUCCESS){
-        printf("error in step 6, enqueue write buffer for database \n");
+        printf("ERROR (%s) in step 6, enqueue write buffer for database \n", get_error_string(status));
         exit(-1);
     }
 
@@ -592,7 +592,7 @@ int main(int argc, char* argv[])
 
     //Check alignment
     if((size_t) d_blockOffsets%256!=0 || (size_t) d_seqNums%256!=0 || (size_t) d_sequences%256!=0){
-        printf("Error in step 6, checking alignment for database \n");
+        printf("ERROR (%s) in step 6, checking alignment for database \n", get_error_string(status));
         exit(-1);
     }
 
@@ -614,7 +614,7 @@ int main(int argc, char* argv[])
             &status);
 
     if(status != CL_SUCCESS){
-        printf("error in step 6, creating buffer for score array\n");
+        printf("ERROR (%s) in step 6, creating buffer for score array\n", get_error_string(status));
         exit(-1);
     }
 
@@ -655,7 +655,7 @@ int main(int argc, char* argv[])
                                         &status);
 
     if(status != CL_SUCCESS){
-        printf("error in step 7, creating the program\n");
+        printf("ERROR (%s) in step 7, creating the program\n", get_error_string(status));
         exit(-1);
     }
     free(kernelBuffer);
@@ -671,7 +671,7 @@ int main(int argc, char* argv[])
                                       (const char*) kernel_name,
                                       &status);
     if(status != CL_SUCCESS){
-        printf("error in step 8, creating kernel\n");
+        printf("ERROR (%s) in step 8, creating kernel\n", get_error_string(status));
         exit(-1);
     }
 
