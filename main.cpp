@@ -577,7 +577,7 @@ int main(int argc, char* argv[])
         printf("error in step 6, enqueue write buffer for database \n");
         exit(-1);
     }
-
+/*      not sure how to do this in OpenCL
     char* d_blob;
 
     seqNumType* d_seqNums;
@@ -599,7 +599,7 @@ int main(int argc, char* argv[])
         printf("Error in step 6, checking alignment for database \n");
         exit(-1);
     }
-
+*/
 //--------------------------------------------------------------------  
     //----------------------------------------------------------------
     // STEP 6.3: Prepare Output array host and device
