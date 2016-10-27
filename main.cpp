@@ -223,7 +223,7 @@ int main(int argc, char* argv[])
     buffer = new char[fsize+1];
     filequ.seekg(0);
     filequ.read(buffer,fsize);
-    buffer[fsize]= '\0';
+    buffer[fsize]= NULL;
     filequ.close();
     if(filequ.bad())
     {
@@ -238,11 +238,11 @@ int main(int argc, char* argv[])
     while(1)
     {
         r.description=strtok(tokStr,"\n");      
-        r.sequence=strtok('\0',">");
+        r.sequence=strtok(NULL,">");
         if(!r.description || !r.sequence)
             break;
         records.push_back(r);
-        tokStr='\0';
+        tokStr=NULL;
     }   
 
     //Strip unwanted characters
@@ -252,7 +252,7 @@ int main(int argc, char* argv[])
         char* badChar;
         //Strip newlines from description
         while((badChar=strpbrk(records[i].description,"\r\n")))
-            *badChar='\0';
+            *badChar=NULL;
 
         int copyAmt = 0;
 
@@ -264,7 +264,7 @@ int main(int argc, char* argv[])
             const char* badResidue;
             if(!dna)
             {
-                if(*c!='\0'&&(badResidue=strchr(UNSUPPORTED_LETTERS,*c))!='\0') //Replace unsupported symbols by replacements
+                if(*c!=NULL&&(badResidue=strchr(UNSUPPORTED_LETTERS,*c))!=NULL) //Replace unsupported symbols by replacements
                 {
                     *c=UNSUPPORTED_LETTERS_REPLACEMENTS[badResidue-UNSUPPORTED_LETTERS];
                 }
@@ -272,7 +272,7 @@ int main(int argc, char* argv[])
 
             const char* residueIndex;
 
-            if((residueIndex=strchr(ALPHABET,*c))=='\0') //Invalid character, skip it
+            if((residueIndex=strchr(ALPHABET,*c))==NULL) //Invalid character, skip it
             {
                 copyAmt--;
                 if(*c!='\n' && *c!='\r' && *c != ' ') //Usually the unsupported characters should only be whitespace and newlines
@@ -283,7 +283,7 @@ int main(int argc, char* argv[])
 
             else
             {
-                if(*c!='\0')
+                if(*c!=NULL)
                 {
                     records[i].length++;
                     numSymbols++;
