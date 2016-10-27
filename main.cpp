@@ -30,6 +30,11 @@ along with GASW.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <assert.h>
 #include <stdlib.h>
+#ifdef __APPLE__
+#include <stdlib.h>
+#else
+#include <malloc.h>
+#endif
 #include <sys/time.h>
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
