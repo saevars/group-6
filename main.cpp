@@ -629,9 +629,23 @@ int main(int argc, char* argv[])
     //-----------------------------------------------------------------
         timestamp_t argsstart = get_timestamp();
 
+    char *kernelFileName, *kernelBuffer;
+    kernelFileName = "kernel.cl";
+    FILE *kernelFile;
+    kernelFile = fopen(kernelFileName, "r");
+    if(kernelFile == NULL){
+        printf("Cannot open kernel file.\n");
+        exit(-1);
+    }
+    fseek(kernelFile, 0, SEEK_END);
+    size_t kernelSize = ftell(kernelFile);
+    rewind(kernelFile);
 
-    
-
+    // read kernel source into buffer
+    kernelBuffer = (char*) malloc(kernelSize + 1);
+    kernelBuffer[kernelSize] = '\0';
+    fread(kernelBuffer, sizeof(char), kernelSize, kernelFile);
+    fclose(kernelFile);
 
 //--------------------------------------------------------------------- 
     //-----------------------------------------------------------------
