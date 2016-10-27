@@ -647,19 +647,18 @@ int main(int argc, char* argv[])
     fread(kernelBuffer, sizeof(char), kernelSize, kernelFile);
     fclose(kernelFile);
 
-    cl_program program;
-
-    program = clCreateProgramWithSource(
+    cl_program program = clCreateProgramWithSource(
                                         context,
-                                        (cl_uint) kernelSize,
-                                        &kernelBuffer,
-                                        NULL,
+                                        1,
+                                        (const char**) &kernelBuffer,
+                                        &kernelSize,
                                         &status);
 
     if(status != CL_SUCCESS){
         printf("error in step 7, creating the program\n");
         exit(-1);
     }
+    free(kernelBuffer);
 
 //--------------------------------------------------------------------- 
     //-----------------------------------------------------------------
