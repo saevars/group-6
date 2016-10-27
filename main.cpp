@@ -665,8 +665,15 @@ int main(int argc, char* argv[])
     // STEP 8: Create Kernel
     //-----------------------------------------------------------------
     
-    
-    
+    char* kernel_name = "protein";
+
+    cl_kernel kernel = clCreateKernel(program,
+                                      (const char*) kernel_name,
+                                      &status);
+    if(status != CL_SUCCESS){
+        printf("error in step 8, creating kernel\n");
+        exit(-1);
+    }
 
 
 //---------------------------------------------------------------------
