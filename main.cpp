@@ -665,7 +665,7 @@ int main(int argc, char* argv[])
     // Build (compile) the program for the devices with
     // clBuildProgram()
     const char options[] = "-cl-std=CL1.2";
-    status |= clBuildProgram(
+    status = clBuildProgram(
             program,
             1,
             &devices[device_id],
@@ -675,7 +675,7 @@ int main(int argc, char* argv[])
 
     if(status != CL_SUCCESS){
         printf("%d\n", status);
-       // printf("error in step 6\n");
+        printf("error in step 7\n");
         exit(-1);
     }
     
@@ -688,9 +688,9 @@ int main(int argc, char* argv[])
 
     cl_kernel clKernel = NULL;
 
-    clKernel = clCreateKernel(program, "mul_kernel", &status);
+    clKernel = clCreateKernel(program, "clkernel", &status);
     if(status != CL_SUCCESS){
-        printf("error in step 7\n");
+        printf("error in step 8\n");
         exit(-1);
     }
     
@@ -737,12 +737,51 @@ int main(int argc, char* argv[])
     // STEP 10: Start the kernel
     //-------------------------------------------------------------------
     //Time the kernel yourself (look at OpenCL profiling)
+
+    size_t globalWorkSize[2];
+    globalWorkSize[0] = CL_DEVICE_MAX_WORK_ITEM_SIZES;
+    globalWorkSize[1] = CL_DEVICE_MAX_WORK_ITEM_SIZES;
+
+    cl_event done;
+
+    status |= clEnqueueNDRangeKernel(
+            cmdQueue,
+            clKernel,
+            2,
+            NULL,
+            globalWorkSize,
+            NULL,
+            0,
+            NULL,
+            &done);
+
+    if(status != CL_SUCCESS){
+        clWaitForEvents (1,&done);
+
+        printf("error in clEnqueueNDRangeKernel\n");
+        printf("%d\n", status);
+        exit(-1);
+    }
+
+    cl_double *result = (double *)malloc(sizeof(unsigned int)*scoreArraySize);
+
+    clEnqueueReadBuffer(
+            cmdQueue,
+            d_scores,
+            CL_TRUE,
+            0,
+            scoreArraySize*sizeof(unsigned int),
+            result,
+            1,
+            &done,
+            NULL);
+
+
+    if(status != CL_SUCCESS){
+        printf("error in reading data\n");
+        exit(-1);
+    }
     
-    
-
-
-
-
 
     //printf("\nKernel computation Time (in ms) = %0.3f ms\n",  );
 
@@ -783,7 +822,15 @@ int main(int argc, char* argv[])
     //-----------------------------------------------------------------------
     // STEP 12: Free OpenCL and C buffers
     //-----------------------------------------------------------------------
-    
+    clReleaseKernel(clKernel);
+    clReleaseProgram(program);
+    clReleaseCommandQueue(cmdQueue);
+    clReleaseMemObject(d_bufferQueryProfile);
+    clReleaseMemObject(d_bufferBlobProfile);
+    clReleaseMemObject(d_scores);
+    clReleaseContext(context);
+
+
     free(blob);
     delete[] queryProfile;
     delete[] sequenceOffsets;
@@ -875,37 +922,6 @@ const char* getDescription(unsigned int index)
     if(index>=descriptions.size())
         return NULL;
     return descriptions[index];
-}
-
-bool copyDbToGPU(){
-    //Prepare database for device access
-   /* if(cudaMalloc(&d_blob,blobSize)!=cudaSuccess)
-        return false;
-    
-    if(cudaMemcpy(d_blob,blob,blobSize,cudaMemcpyHostToDevice)!=cudaSuccess)
-        return false;
-    
-    */
-    char* d_blob;
-    
-    seqNumType* d_seqNums;
-    blockOffsetType* d_blockOffsets;
-    seqType* d_sequences;
-    
-    d_blockOffsets = (blockOffsetType*) d_blob;
-    d_seqNums = (seqNumType*) ((char*) d_blockOffsets + metadata.numBlocks*sizeof(blockOffsetType));
-    d_seqNums = (seqNumType*) ((char*) d_seqNums + metadata.alignmentPadding1);
-    d_sequences = (seqType*) ((char*) d_seqNums + metadata.numBlocks*BLOCK_SIZE*sizeof(seqNumType));
-    d_sequences = (seqType*) ((char*) d_sequences + metadata.alignmentPadding2);
-    
-    //Check alignment
-    if((size_t) d_blockOffsets%256!=0)
-        return false;
-    if((size_t) d_seqNums%256!=0)
-        return false;
-    if((size_t) d_sequences%256!=0)
-        return false;
-    return true;
 }
 
 const char *get_error_string(cl_int error)
