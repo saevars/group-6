@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
     platforms = (cl_platform_id*)malloc(numPlatforms*sizeof(cl_platform_id));
 
     // Fill in platforms with clGetPlatformIDs()
-    status = clGetPlatformIDs(numPlatforms, platforms, NULL);
+    status |= clGetPlatformIDs(numPlatforms, platforms, NULL);
     
     if(status != CL_SUCCESS){
         printf("error in step 1\n");
