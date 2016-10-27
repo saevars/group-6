@@ -590,6 +590,10 @@ int main(int argc, char* argv[])
     d_sequences = (seqType*) ((char*) d_seqNums + metadata.numBlocks*BLOCK_SIZE*sizeof(seqNumType));
     d_sequences = (seqType*) ((char*) d_sequences + metadata.alignmentPadding2);
 
+    printf("%d \n", (size_t) d_blockOffsets );
+    printf("%d \n", (size_t) d_seqNums );
+    printf("%d \n", (size_t) d_sequences );
+    printf("Error in step 6, checking alignment for database \n");
     //Check alignment
     if((size_t) d_blockOffsets%256!=0 || (size_t) d_seqNums%256!=0 || (size_t) d_sequences%256!=0){
         printf("Error in step 6, checking alignment for database \n");
