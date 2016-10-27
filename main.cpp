@@ -627,7 +627,7 @@ int main(int argc, char* argv[])
     //-----------------------------------------------------------------
     // STEP 7: Create and compile the program
     //-----------------------------------------------------------------
-        timestamp_t argsstart = get_timestamp();
+    timestamp_t argsstart = get_timestamp();
 
     char *kernelFileName, *kernelBuffer;
     kernelFileName = "kernel.cl";
@@ -646,6 +646,20 @@ int main(int argc, char* argv[])
     kernelBuffer[kernelSize] = '\0';
     fread(kernelBuffer, sizeof(char), kernelSize, kernelFile);
     fclose(kernelFile);
+
+    cl_program program;
+
+    program = clCreateProgramWithSource(
+                                        context,
+                                        (cl_uint) kernelSize,
+                                        &kernelBuffer,
+                                        NULL,
+                                        &status);
+
+    if(status != CL_SUCCESS){
+        printf("error in step 7, creating the program\n");
+        exit(-1);
+    }
 
 //--------------------------------------------------------------------- 
     //-----------------------------------------------------------------
