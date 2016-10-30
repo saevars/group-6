@@ -664,7 +664,7 @@ int main(int argc, char* argv[])
 
     // Build (compile) the program for the devices with
     // clBuildProgram()
-    const char options[] = "-cl-std=CL1.2";
+    const char options[] = "-cl-std=CL1.2 -I ./";
     status = clBuildProgram(
             program,
             1,
@@ -674,7 +674,7 @@ int main(int argc, char* argv[])
             NULL);
 
     if(status != CL_SUCCESS){
-        printf("%d\n", status);
+        printf("%s\n", get_error_string(status));
         printf("error in step 7\n");
         exit(-1);
     }
