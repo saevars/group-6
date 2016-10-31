@@ -1,4 +1,5 @@
-//Add your kernel function here
-__kernel void clkernel(global double *vector_in, global double *matrix_in, global double *vector_out){
-    //printf("hello\n");
+#pragma OPENCL EXTENSION cl_khr_fp64: enable
+__kernel void clkernel(global char *vector_in, global unsigned short *matrix_in, global unsigned short *vector_out){
+ int x = get_global_id(0);
+ vector_out[x] = 20;
 }

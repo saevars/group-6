@@ -606,7 +606,7 @@ int main(int argc, char* argv[])
     //----------------------------------------------------------------
     
     scoreType* scores=0;
-    unsigned int  scoreArraySize = sizeof(scoreType)*metadata.numSequences; 
+    unsigned int  scoreArraySize = sizeof(scoreType)*metadata.numSequences;
     scores = (scoreType*)malloc(scoreArraySize);
     cl_mem d_scores;
 
@@ -664,7 +664,7 @@ int main(int argc, char* argv[])
 
     // Build (compile) the program for the devices with
     // clBuildProgram()
-    const char options[] = "-cl-std=CL1.2";
+    const char options[] = "-cl-std=CL1.1";
     status = clBuildProgram(
             program,
             1,
@@ -763,14 +763,14 @@ int main(int argc, char* argv[])
         exit(-1);
     }
 
-    cl_double *result = (double *)malloc(sizeof(unsigned int)*scoreArraySize);
+    scoreType *result = (scoreType *)malloc(scoreArraySize);
 
     clEnqueueReadBuffer(
             cmdQueue,
             d_scores,
             CL_TRUE,
             0,
-            scoreArraySize*sizeof(unsigned int),
+            scoreArraySize,
             result,
             1,
             &done,
@@ -789,9 +789,6 @@ int main(int argc, char* argv[])
     //--------------------------------------------------------------------
     // STEP 11: Copy results back to host
     //--------------------------------------------------------------------
-
-
-
 
 
 
