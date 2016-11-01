@@ -489,7 +489,8 @@ int main(int argc, char* argv[])
         ptr+=DESC_SIZE;
     }
     
-    printf("%s: %lu symbols in %lu sequence(s) in %lu block(s) in database.\n",options.dbFile,getNumSymbols(),getNumSequences(),getNumBlocks());
+    printf("%s: %lu symbols in %lu sequence(s) in %lu block(s) in database.\n",options.dbFile,getNumSymbols(),
+           getNumSequences(),getNumBlocks());
     
     timestamp_t dbstop = get_timestamp();
     timestamp_t dbinittime =(dbstop-dbinit);
@@ -548,9 +549,9 @@ int main(int argc, char* argv[])
         return false;
 
     */
-    cl_mem d_bufferBlobProfile;
+    cl_mem bufferBlobProfile;
 
-    d_bufferBlobProfile = clCreateBuffer(
+    bufferBlobProfile = clCreateBuffer(
             context,
             CL_MEM_READ_ONLY,
             blobSize,
@@ -564,7 +565,7 @@ int main(int argc, char* argv[])
 
     status = clEnqueueWriteBuffer (
             cmdQueue,
-            d_bufferBlobProfile,
+            bufferBlobProfile,
             CL_FALSE,
             0,
             blobSize,
@@ -664,7 +665,7 @@ int main(int argc, char* argv[])
 
     // Build (compile) the program for the devices with
     // clBuildProgram()
-    const char options[] = "-cl-std=CL1.1";
+    const char options[] = "-cl-std=CL1.1 -I./";
     status = clBuildProgram(
             program,
             1,
@@ -701,6 +702,15 @@ int main(int argc, char* argv[])
     // STEP 9: Set Kernel Arguments
     //-----------------------------------------------------------------
 
+    /*
+     * int numGroups, scoreType* scores, const GPUdb::blockOffsetType* blockOffsets,
+     * const GPUdb::seqNumType* seqNums, const GPUdb::seqType* sequences,  TempData2* const tempColumns
+     *
+     * int numGroups = getNumBlocks() * BLOCK_SIZE
+     * unsigned int* blockOffsets = getBlockOffsets();
+     * unsigned int* seqNums = getNumSequences();
+     * sequences =
+     * */
 
     status  = clSetKernelArg(
             clKernel,
@@ -711,7 +721,7 @@ int main(int argc, char* argv[])
             clKernel,
             1,
             sizeof(cl_mem),
-            &d_bufferBlobProfile);
+            &bufferBlobProfile);
     status |= clSetKernelArg(
             clKernel,
             2,
@@ -823,7 +833,7 @@ int main(int argc, char* argv[])
     clReleaseProgram(program);
     clReleaseCommandQueue(cmdQueue);
     clReleaseMemObject(d_bufferQueryProfile);
-    clReleaseMemObject(d_bufferBlobProfile);
+    clReleaseMemObject(bufferBlobProfile);
     clReleaseMemObject(d_scores);
     clReleaseContext(context);
 
