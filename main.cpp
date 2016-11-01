@@ -660,6 +660,20 @@ int main(int argc, char* argv[])
     }
     free(kernelBuffer);
 
+    const char options[] = "-cl-std=CL1.2";
+    status |= clBuildProgram(
+        program, 
+        1, 
+        &devices[device_id], 
+        options, 
+        NULL, 
+        NULL);
+
+    if(status != CL_SUCCESS){
+        printf("ERROR (%s) in step 7, building program\n", get_error_string(status));
+        exit(-1);
+    }
+
 //--------------------------------------------------------------------- 
     //-----------------------------------------------------------------
     // STEP 8: Create Kernel
