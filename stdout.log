@@ -1,0 +1,37 @@
+
+START OF THE PROGRAM
+Matrix: blosum62.mat
+Sequence: qu.fasta
+Database: out.gpudb
+qu.fasta: input sequence length is 320.
+out.gpudb: 197423140 symbols in 552265 sequence(s) in 362 block(s) in database.
+blobSize = 204042240 ...
+
+
+
+OpenCL initialisation Time: 548214
+matrix, query and database initialisation Time (host): 130863
+Mem Copy from host to device Time: 25205
+Time for creating program and setting kernel args: 11639
+Sorting results...
+Results:
+  0. sp|A5VJM1|PLSY_LACRD Glycerol-3-phosphate acyltran	 SCORE: 0
+  1. sp|A6L4P5|RSMG_BACV8 Ribosomal RNA small subunit m	 SCORE: 0
+  2. sp|Q73NP0|KAD_TREDE Adenylate kinase OS=Treponema 	 SCORE: 0
+  3. sp|Q831G0|UPP_ENTFA Uracil phosphoribosyltransfera	 SCORE: 0
+  4. sp|O61069|KAD_TRYBR Adenylate kinase OS=Trypanosom	 SCORE: 0
+  5. sp|Q54JU1|GCSH4_DICDI Glycine cleavage system H-li	 SCORE: 0
+  6. sp|A1AMT7|LIPB_PELPD Octanoyltransferase OS=Peloba	 SCORE: 0
+  7. sp|A1ANJ2|TRPF_PELPD N-(5'-phosphoribosyl)anthrani	 SCORE: 0
+  8. sp|Q86I14|COMD7_DICDI COMM domain-containing prote	 SCORE: 0
+  9. sp|P30104|GSTT1_DROER Glutathione S-transferase 1-	 SCORE: 0
+ 10. sp|Q45593|YYDI_BACSU Probable peptide export ATP-b	 SCORE: 0
+ 11. sp|P77174|YBDM_ECOLI Uncharacterized protein YbdM 	 SCORE: 0
+ 12. sp|O05689|CRP_PASMU cAMP-activated global transcri	 SCORE: 0
+ 13. sp|B1JIW1|RL3_YERPY 50S ribosomal protein L3 OS=Ye	 SCORE: 0
+ 14. sp|P11252|RL3_YERPS 50S ribosomal protein L3 OS=Ye	 SCORE: 0
+ 15. sp|Q9SSM7|PYL3_ARATH Abscisic acid receptor PYL3 O	 SCORE: 0
+ 16. sp|B2G735|PLSY_LACRJ Glycerol-3-phosphate acyltran	 SCORE: 0
+ 17. sp|Q8RBA4|NADD_CALS4 Probable nicotinate-nucleotid	 SCORE: 0
+ 18. sp|Q2NWE5|PLSY_SODGM Glycerol-3-phosphate acyltran	 SCORE: 0
+ 19. sp|Q2YZ16|Y2248_STAAB Uncharacterized lipoprotein 	 SCORE: 0
