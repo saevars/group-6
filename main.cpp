@@ -520,7 +520,7 @@ int main(int argc, char* argv[])
         printf("error in step 6, creating buffer for query profile \n");
         exit(-1);
     }
-    
+    /*
     status = clEnqueueWriteBuffer (
                                    cmdQueue,
                                    d_bufferQueryProfile,
@@ -536,7 +536,7 @@ int main(int argc, char* argv[])
         printf("error in step 6, enqueue write buffer for query profile \n");
         exit(-1);
     }
-  
+  */
 //--------------------------------------------------------------------    
     //----------------------------------------------------------------
     // STEP 6.2: Copy database to GPU
@@ -562,7 +562,7 @@ int main(int argc, char* argv[])
         printf("error in step 6, creating buffer for database \n");
         exit(-1);
     }
-
+/*
     status = clEnqueueWriteBuffer (
             cmdQueue,
             bufferBlobProfile,
@@ -578,54 +578,68 @@ int main(int argc, char* argv[])
         printf("error in step 6, enqueue write buffer for database \n");
         exit(-1);
     }
-/*      not sure how to do this in OpenCL
-    char* d_blob;
-
-    seqNumType* d_seqNums;
-    blockOffsetType* d_blockOffsets;
-    seqType* d_sequences;
-
-    d_blockOffsets = (blockOffsetType*) d_blob;
-    d_seqNums = (seqNumType*) ((char*) d_blockOffsets + metadata.numBlocks*sizeof(blockOffsetType));
-    d_seqNums = (seqNumType*) ((char*) d_seqNums + metadata.alignmentPadding1);
-    d_sequences = (seqType*) ((char*) d_seqNums + metadata.numBlocks*BLOCK_SIZE*sizeof(seqNumType));
-    d_sequences = (seqType*) ((char*) d_sequences + metadata.alignmentPadding2);
-
-    printf("%d \n", (size_t) d_blockOffsets );
-    printf("%d \n", (size_t) d_seqNums );
-    printf("%d \n", (size_t) d_sequences );
-    printf("Error in step 6, checking alignment for database \n");
-    //Check alignment
-    if((size_t) d_blockOffsets%256!=0 || (size_t) d_seqNums%256!=0 || (size_t) d_sequences%256!=0){
-        printf("Error in step 6, checking alignment for database \n");
-        exit(-1);
-    }
-*/
+    */
 //--------------------------------------------------------------------  
     //----------------------------------------------------------------
     // STEP 6.3: Prepare Output array host and device
     //----------------------------------------------------------------
     
-    scoreType* scores=0;
+    scoreType* scores;
     unsigned int  scoreArraySize = sizeof(scoreType)*metadata.numSequences;
     scores = (scoreType*)malloc(scoreArraySize);
-    cl_mem d_scores;
+    cl_mem bufferScores;
 
-    d_scores = clCreateBuffer(
+    bufferScores = clCreateBuffer(
             context,
             CL_MEM_WRITE_ONLY,
             scoreArraySize,
             NULL,
             &status);
 
+    status |= clEnqueueWriteBuffer (
+            cmdQueue,
+            bufferScores,
+            CL_FALSE,
+            0,
+            scoreArraySize,
+            scores,
+            0,
+            NULL,
+            NULL);
+
     if(status != CL_SUCCESS){
         printf("error in step 6, creating buffer for score array\n");
         exit(-1);
     }
+/*
+    cl_mem bufferNumGroups;
+
+    bufferNumGroups = clCreateBuffer(
+            context,
+            CL_MEM_READ_ONLY,
+            sizeof(size_t),
+            NULL,
+            &status);
+
+    status |= clEnqueueWriteBuffer (
+            cmdQueue,
+            bufferNumGroups,
+            CL_FALSE,
+            0,
+            sizeof(size_t),
+            (size_t*) metadata.numSequences,
+            0,
+            NULL,
+            NULL);
+*/
+    if(status != CL_SUCCESS){
+        printf("error in step 6, creating buffer for numgroups\n");
+        exit(-1);
+    }
 
 
-    timestamp_t cpend = get_timestamp();
-    seconds = cpend - cpstart;
+//    timestamp_t cpend = get_timestamp();
+  //  seconds = cpend - cpstart;
     //printf("Copy Time: %llu\n", seconds);
 
     char *mulFileName, *mulBuffer;
@@ -711,7 +725,18 @@ int main(int argc, char* argv[])
      * unsigned int* seqNums = getNumSequences();
      * sequences =
      * */
+    status |= clSetKernelArg(
+            clKernel,
+            0,
+            sizeof(size_t),
+            &metadata.numSequences);
 
+    status |= clSetKernelArg(
+            clKernel,
+            1,
+            sizeof(cl_mem),
+            &bufferScores);
+/*
     status  = clSetKernelArg(
             clKernel,
             0,
@@ -726,8 +751,8 @@ int main(int argc, char* argv[])
             clKernel,
             2,
             sizeof(cl_mem),
-            &d_scores);
-
+            &bufferScores);
+*/
 
     if(status != CL_SUCCESS){
         printf("error in step 9\n");
@@ -773,25 +798,25 @@ int main(int argc, char* argv[])
         exit(-1);
     }
 
-    scoreType *result = (scoreType *)malloc(scoreArraySize);
-
-    clEnqueueReadBuffer(
+    //scoreType *result = (scoreType *)malloc(scoreArraySize)
+    /*status = clEnqueueReadBuffer(
             cmdQueue,
-            d_scores,
+            bufferScores,
             CL_TRUE,
             0,
             scoreArraySize,
-            result,
+            scores,
             1,
             &done,
             NULL);
 
 
     if(status != CL_SUCCESS){
-        printf("error in reading data\n");
+        printf("error in reading data: %s\n", get_error_string(status));
+
         exit(-1);
-    }
-    
+    }*/
+
 
     //printf("\nKernel computation Time (in ms) = %0.3f ms\n",  );
 
@@ -834,7 +859,7 @@ int main(int argc, char* argv[])
     clReleaseCommandQueue(cmdQueue);
     clReleaseMemObject(d_bufferQueryProfile);
     clReleaseMemObject(bufferBlobProfile);
-    clReleaseMemObject(d_scores);
+    clReleaseMemObject(bufferScores);
     clReleaseContext(context);
 
 
