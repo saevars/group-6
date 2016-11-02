@@ -714,6 +714,7 @@ int main(int argc, char* argv[])
     if(status != CL_SUCCESS){
         printf("ERROR (%s) in step 8, creating kernel\n", get_error_string(status));
         exit(-1);
+    }
 
 
 //---------------------------------------------------------------------
