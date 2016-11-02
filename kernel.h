@@ -3,6 +3,9 @@
 //
 
 typedef unsigned short scoreType;
+typedef unsigned int blockOffsetType;
+typedef unsigned int seqSizeType;
+typedef unsigned int seqNumType;
 
 struct TempData
 {

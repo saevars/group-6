@@ -562,14 +562,18 @@ int main(int argc, char* argv[])
         printf("error in step 6, creating buffer for database \n");
         exit(-1);
     }
-/*
+
+    printf("h %d\n", blockOffsets[1]);
+    printf("h %d\n", blockOffsets[2]);
+    printf("h %d\n", blockOffsets[3]);
+
     status = clEnqueueWriteBuffer (
             cmdQueue,
             bufferBlobProfile,
             CL_FALSE,
             0,
             blobSize,
-            blob,
+            blockOffsets,
             0,
             NULL,
             NULL);
@@ -578,7 +582,7 @@ int main(int argc, char* argv[])
         printf("error in step 6, enqueue write buffer for database \n");
         exit(-1);
     }
-    */
+
 //--------------------------------------------------------------------  
     //----------------------------------------------------------------
     // STEP 6.3: Prepare Output array host and device
@@ -596,7 +600,7 @@ int main(int argc, char* argv[])
             NULL,
             &status);
 
-    status |= clEnqueueWriteBuffer (
+  /*  status |= clEnqueueWriteBuffer (
             cmdQueue,
             bufferScores,
             CL_FALSE,
@@ -605,7 +609,7 @@ int main(int argc, char* argv[])
             scores,
             0,
             NULL,
-            NULL);
+            NULL);*/
 
     if(status != CL_SUCCESS){
         printf("error in step 6, creating buffer for score array\n");
@@ -736,6 +740,12 @@ int main(int argc, char* argv[])
             1,
             sizeof(cl_mem),
             &bufferScores);
+
+    status |= clSetKernelArg(
+            clKernel,
+            2,
+            sizeof(cl_mem),
+            &bufferBlobProfile);
 /*
     status  = clSetKernelArg(
             clKernel,
@@ -755,7 +765,7 @@ int main(int argc, char* argv[])
 */
 
     if(status != CL_SUCCESS){
-        printf("error in step 9\n");
+        printf("error in step 9: %s\n", get_error_string(status));
         exit(-1);
     }
 
@@ -774,8 +784,8 @@ int main(int argc, char* argv[])
     //Time the kernel yourself (look at OpenCL profiling)
 
     size_t globalWorkSize[2];
-    globalWorkSize[0] = CL_DEVICE_MAX_WORK_ITEM_SIZES;
-    globalWorkSize[1] = CL_DEVICE_MAX_WORK_ITEM_SIZES;
+    globalWorkSize[0] = metadata.numSequences;//CL_DEVICE_MAX_WORK_ITEM_SIZES;
+    globalWorkSize[1] = 1;// metadata.numSequences;
 
     cl_event done;
 
@@ -790,6 +800,7 @@ int main(int argc, char* argv[])
             NULL,
             &done);
 
+
     if(status != CL_SUCCESS){
         clWaitForEvents (1,&done);
 
@@ -798,8 +809,8 @@ int main(int argc, char* argv[])
         exit(-1);
     }
 
-    //scoreType *result = (scoreType *)malloc(scoreArraySize)
-    /*status = clEnqueueReadBuffer(
+    //scoreType *result = (scoreType *)malloc(scoreArraySize);
+    status = clEnqueueReadBuffer(
             cmdQueue,
             bufferScores,
             CL_TRUE,
@@ -815,7 +826,7 @@ int main(int argc, char* argv[])
         printf("error in reading data: %s\n", get_error_string(status));
 
         exit(-1);
-    }*/
+    }
 
 
     //printf("\nKernel computation Time (in ms) = %0.3f ms\n",  );
@@ -841,11 +852,12 @@ int main(int argc, char* argv[])
         sortScores[i].score = scores[i];
     }
     free(scores);
+  //  free(result);
     std::sort(sortScores.begin(),sortScores.end(),&resultComparisonFunc);
     
     //Display results
     puts("Results:");
-    for(size_t i=0;i < std::min(20,(int)getNumSequences());i++)  //(int)options.listSize
+    for(size_t i=0;i < std::min(5,(int)getNumSequences());i++)  //(int)options.listSize
     {
         printf("%3ld. %-50.50s\t SCORE: %d\n",i,getDescription(sortScores[i].index),sortScores[i].score);
     }
