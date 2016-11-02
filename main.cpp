@@ -542,38 +542,64 @@ int main(int argc, char* argv[])
     // STEP 6.2: Copy database to GPU
     //----------------------------------------------------------------
 
-    /* if(cudaMalloc(&d_blob,blobSize)!=cudaSuccess)
-        return false;
 
-    if(cudaMemcpy(d_blob,blob,blobSize,cudaMemcpyHostToDevice)!=cudaSuccess)
-        return false;
+    cl_mem bufferBlockOffsets, bufferSeqNums, bufferSequences;
 
-    */
-    cl_mem bufferBlobProfile;
-
-    bufferBlobProfile = clCreateBuffer(
+    bufferBlockOffsets = clCreateBuffer(
             context,
             CL_MEM_READ_ONLY,
-            blobSize,
+            metadata.numBlocks*sizeof(blockOffsetType),
             NULL,
             &status);
 
-    if(status != CL_SUCCESS){
-        printf("error in step 6, creating buffer for database \n");
-        exit(-1);
-    }
-
-    printf("h %d\n", blockOffsets[1]);
-    printf("h %d\n", blockOffsets[2]);
-    printf("h %d\n", blockOffsets[3]);
-
-    status = clEnqueueWriteBuffer (
+    status |= clEnqueueWriteBuffer (
             cmdQueue,
-            bufferBlobProfile,
+            bufferBlockOffsets,
             CL_FALSE,
             0,
-            blobSize,
+            metadata.numBlocks*sizeof(blockOffsetType),
             blockOffsets,
+            0,
+            NULL,
+            NULL);
+
+
+    printf("h %d\n", sequences[1]);
+    printf("h %d\n", sequences[2]);
+    printf("h %d\n", sequences[3]);
+
+    bufferSeqNums = clCreateBuffer(
+            context,
+            CL_MEM_READ_ONLY,
+            metadata.numBlocks*BLOCK_SIZE*sizeof(seqNumType),
+            NULL,
+            &status);
+
+    status |= clEnqueueWriteBuffer (
+            cmdQueue,
+            bufferSeqNums,
+            CL_FALSE,
+            0,
+            metadata.numBlocks*BLOCK_SIZE*sizeof(seqNumType),
+            seqNums,
+            0,
+            NULL,
+            NULL);
+
+    bufferSequences = clCreateBuffer(
+            context,
+            CL_MEM_READ_ONLY,
+            metadata.numSequences*sizeof(seqType),
+            NULL,
+            &status);
+
+    status |= clEnqueueWriteBuffer (
+            cmdQueue,
+            bufferSequences,
+            CL_FALSE,
+            0,
+            metadata.numSequences*sizeof(seqType),
+            sequences,
             0,
             NULL,
             NULL);
@@ -683,7 +709,7 @@ int main(int argc, char* argv[])
 
     // Build (compile) the program for the devices with
     // clBuildProgram()
-    const char options[] = "-cl-std=CL1.1 -I./";
+    const char options[] = "-cl-std=CL1.2 -I./";
     status = clBuildProgram(
             program,
             1,
@@ -692,12 +718,11 @@ int main(int argc, char* argv[])
             NULL,
             NULL);
 
-    if(status != CL_SUCCESS){
-        printf("%d\n", status);
+    if(status != CL_SUCCESS) {
+        printf("%s\n", get_error_string(status));
         printf("error in step 7\n");
         exit(-1);
     }
-    
 
 
 //--------------------------------------------------------------------- 
@@ -745,7 +770,19 @@ int main(int argc, char* argv[])
             clKernel,
             2,
             sizeof(cl_mem),
-            &bufferBlobProfile);
+            &bufferBlockOffsets);
+
+    status |= clSetKernelArg(
+            clKernel,
+            3,
+            sizeof(cl_mem),
+            &bufferSeqNums);
+
+    status |= clSetKernelArg(
+            clKernel,
+            4,
+            sizeof(cl_mem),
+            &bufferSequences);
 /*
     status  = clSetKernelArg(
             clKernel,
@@ -870,7 +907,7 @@ int main(int argc, char* argv[])
     clReleaseProgram(program);
     clReleaseCommandQueue(cmdQueue);
     clReleaseMemObject(d_bufferQueryProfile);
-    clReleaseMemObject(bufferBlobProfile);
+    clReleaseMemObject(bufferBlockOffsets);
     clReleaseMemObject(bufferScores);
     clReleaseContext(context);
 

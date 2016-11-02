@@ -4,7 +4,7 @@
 
 typedef unsigned short scoreType;
 typedef unsigned int blockOffsetType;
-typedef unsigned int seqSizeType;
+typedef signed char seqType;
 typedef unsigned int seqNumType;
 
 struct TempData
