@@ -489,7 +489,8 @@ int main(int argc, char* argv[])
         ptr+=DESC_SIZE;
     }
     
-    printf("%s: %lu symbols in %lu sequence(s) in %lu block(s) in database.\n",options.dbFile,getNumSymbols(),getNumSequences(),getNumBlocks());
+    printf("%s: %lu symbols in %lu sequence(s) in %lu block(s) in database.\n",options.dbFile,getNumSymbols(),
+           getNumSequences(),getNumBlocks());
     
     timestamp_t dbstop = get_timestamp();
     timestamp_t dbinittime =(dbstop-dbinit);
@@ -548,9 +549,9 @@ int main(int argc, char* argv[])
         return false;
 
     */
-    cl_mem d_bufferBlobProfile;
+    cl_mem bufferBlobProfile;
 
-    d_bufferBlobProfile = clCreateBuffer(
+    bufferBlobProfile = clCreateBuffer(
             context,
             CL_MEM_READ_ONLY,
             blobSize,
@@ -564,7 +565,7 @@ int main(int argc, char* argv[])
 
     status = clEnqueueWriteBuffer (
             cmdQueue,
-            d_bufferBlobProfile,
+            bufferBlobProfile,
             CL_FALSE,
             0,
             blobSize,
@@ -577,7 +578,7 @@ int main(int argc, char* argv[])
         printf("ERROR (%s) in step 6, enqueue write buffer for database \n", get_error_string(status));
         exit(-1);
     }
-
+/*      not sure how to do this in OpenCL
     char* d_blob;
 
     seqNumType* d_seqNums;
@@ -590,19 +591,23 @@ int main(int argc, char* argv[])
     d_sequences = (seqType*) ((char*) d_seqNums + metadata.numBlocks*BLOCK_SIZE*sizeof(seqNumType));
     d_sequences = (seqType*) ((char*) d_sequences + metadata.alignmentPadding2);
 
+    printf("%d \n", (size_t) d_blockOffsets );
+    printf("%d \n", (size_t) d_seqNums );
+    printf("%d \n", (size_t) d_sequences );
+    printf("Error in step 6, checking alignment for database \n");
     //Check alignment
     if((size_t) d_blockOffsets%256!=0 || (size_t) d_seqNums%256!=0 || (size_t) d_sequences%256!=0){
         printf("ERROR (%s) in step 6, checking alignment for database \n", get_error_string(status));
         exit(-1);
     }
-
+*/
 //--------------------------------------------------------------------  
     //----------------------------------------------------------------
     // STEP 6.3: Prepare Output array host and device
     //----------------------------------------------------------------
     
     scoreType* scores=0;
-    unsigned int  scoreArraySize = sizeof(scoreType)*metadata.numSequences; 
+    unsigned int  scoreArraySize = sizeof(scoreType)*metadata.numSequences;
     scores = (scoreType*)malloc(scoreArraySize);
     cl_mem d_scores;
 
@@ -622,6 +627,25 @@ int main(int argc, char* argv[])
     timestamp_t cpend = get_timestamp();
     seconds = cpend - cpstart;
     //printf("Copy Time: %llu\n", seconds);
+
+    char *mulFileName, *mulBuffer;
+    mulFileName = "kernel.cl";
+    FILE *mulFile;
+    mulFile = fopen(mulFileName, "r");
+    if(mulFile == NULL){
+        printf("cannot open .cl file\n");
+        printf("current path: %s\n", mulFileName);
+        exit(-1);
+    }
+    fseek(mulFile, 0, SEEK_END);
+    size_t mulSize = ftell(mulFile);
+    rewind(mulFile);
+
+    // read kernel source into buffer
+    mulBuffer = (char*) malloc(mulSize + 1);
+    mulBuffer[mulSize] = '\0';
+    fread(mulBuffer, sizeof(char), mulSize, mulFile);
+    fclose(mulFile);
     
 //---------------------------------------------------------------------
     //-----------------------------------------------------------------
@@ -660,14 +684,18 @@ int main(int argc, char* argv[])
     }
     free(kernelBuffer);
 
-    const char options[] = "-cl-std=CL1.2";
-    status |= clBuildProgram(
-        program, 
-        1, 
-        &devices[device_id], 
-        options, 
-        NULL, 
-        NULL);
+
+    // Build (compile) the program for the devices with
+    // clBuildProgram()
+    const char options[] = "-cl-std=CL1.1 -I./";
+    status = clBuildProgram(
+            program,
+            1,
+            &devices[device_id],
+            options,
+            NULL,
+            NULL);
+
 
     if(status != CL_SUCCESS){
         printf("ERROR (%s) in step 7, building program\n", get_error_string(status));
@@ -679,23 +707,51 @@ int main(int argc, char* argv[])
     // STEP 8: Create Kernel
     //-----------------------------------------------------------------
 
-    cl_kernel kernel = clCreateKernel(program, "protein", &status);
+
+    cl_kernel clKernel = NULL;
+
+    clKernel = clCreateKernel(program, "clkernel", &status);
     if(status != CL_SUCCESS){
         printf("ERROR (%s) in step 8, creating kernel\n", get_error_string(status));
         exit(-1);
-    }
 
 
 //---------------------------------------------------------------------
     //-----------------------------------------------------------------
     // STEP 9: Set Kernel Arguments
     //-----------------------------------------------------------------
-    
+
+    /*
+     * int numGroups, scoreType* scores, const GPUdb::blockOffsetType* blockOffsets,
+     * const GPUdb::seqNumType* seqNums, const GPUdb::seqType* sequences,  TempData2* const tempColumns
+     *
+     * int numGroups = getNumBlocks() * BLOCK_SIZE
+     * unsigned int* blockOffsets = getBlockOffsets();
+     * unsigned int* seqNums = getNumSequences();
+     * sequences =
+     * */
+
+    status  = clSetKernelArg(
+            clKernel,
+            0,
+            sizeof(cl_mem),
+            &d_bufferQueryProfile);
+    status |= clSetKernelArg(
+            clKernel,
+            1,
+            sizeof(cl_mem),
+            &bufferBlobProfile);
+    status |= clSetKernelArg(
+            clKernel,
+            2,
+            sizeof(cl_mem),
+            &d_scores);
 
 
-
-
-
+    if(status != CL_SUCCESS){
+        printf("error in step 9\n");
+        exit(-1);
+    }
 
 
     timestamp_t argsend = get_timestamp();
@@ -710,12 +766,51 @@ int main(int argc, char* argv[])
     // STEP 10: Start the kernel
     //-------------------------------------------------------------------
     //Time the kernel yourself (look at OpenCL profiling)
+
+    size_t globalWorkSize[2];
+    globalWorkSize[0] = CL_DEVICE_MAX_WORK_ITEM_SIZES;
+    globalWorkSize[1] = CL_DEVICE_MAX_WORK_ITEM_SIZES;
+
+    cl_event done;
+
+    status |= clEnqueueNDRangeKernel(
+            cmdQueue,
+            clKernel,
+            2,
+            NULL,
+            globalWorkSize,
+            NULL,
+            0,
+            NULL,
+            &done);
+
+    if(status != CL_SUCCESS){
+        clWaitForEvents (1,&done);
+
+        printf("error in clEnqueueNDRangeKernel\n");
+        printf("%d\n", status);
+        exit(-1);
+    }
+
+    scoreType *result = (scoreType *)malloc(scoreArraySize);
+
+    clEnqueueReadBuffer(
+            cmdQueue,
+            d_scores,
+            CL_TRUE,
+            0,
+            scoreArraySize,
+            result,
+            1,
+            &done,
+            NULL);
+
+
+    if(status != CL_SUCCESS){
+        printf("error in reading data\n");
+        exit(-1);
+    }
     
-    
-
-
-
-
 
     //printf("\nKernel computation Time (in ms) = %0.3f ms\n",  );
 
@@ -723,9 +818,6 @@ int main(int argc, char* argv[])
     //--------------------------------------------------------------------
     // STEP 11: Copy results back to host
     //--------------------------------------------------------------------
-
-
-
 
 
 
@@ -756,7 +848,15 @@ int main(int argc, char* argv[])
     //-----------------------------------------------------------------------
     // STEP 12: Free OpenCL and C buffers
     //-----------------------------------------------------------------------
-    
+    clReleaseKernel(clKernel);
+    clReleaseProgram(program);
+    clReleaseCommandQueue(cmdQueue);
+    clReleaseMemObject(d_bufferQueryProfile);
+    clReleaseMemObject(bufferBlobProfile);
+    clReleaseMemObject(d_scores);
+    clReleaseContext(context);
+
+
     free(blob);
     delete[] queryProfile;
     delete[] sequenceOffsets;
@@ -848,37 +948,6 @@ const char* getDescription(unsigned int index)
     if(index>=descriptions.size())
         return NULL;
     return descriptions[index];
-}
-
-bool copyDbToGPU(){
-    //Prepare database for device access
-   /* if(cudaMalloc(&d_blob,blobSize)!=cudaSuccess)
-        return false;
-    
-    if(cudaMemcpy(d_blob,blob,blobSize,cudaMemcpyHostToDevice)!=cudaSuccess)
-        return false;
-    
-    */
-    char* d_blob;
-    
-    seqNumType* d_seqNums;
-    blockOffsetType* d_blockOffsets;
-    seqType* d_sequences;
-    
-    d_blockOffsets = (blockOffsetType*) d_blob;
-    d_seqNums = (seqNumType*) ((char*) d_blockOffsets + metadata.numBlocks*sizeof(blockOffsetType));
-    d_seqNums = (seqNumType*) ((char*) d_seqNums + metadata.alignmentPadding1);
-    d_sequences = (seqType*) ((char*) d_seqNums + metadata.numBlocks*BLOCK_SIZE*sizeof(seqNumType));
-    d_sequences = (seqType*) ((char*) d_sequences + metadata.alignmentPadding2);
-    
-    //Check alignment
-    if((size_t) d_blockOffsets%256!=0)
-        return false;
-    if((size_t) d_seqNums%256!=0)
-        return false;
-    if((size_t) d_sequences%256!=0)
-        return false;
-    return true;
 }
 
 const char *get_error_string(cl_int error)
