@@ -1,8 +1,9 @@
 CMakeLists.txt
-out.gpudb
-out.gpudb.descs
+*.gpudb
+*.gpudb.descs
 Makefile
 blosum62.mat
 run_settings.ini
-short.fasta
+*.fasta
 .idea
+.DS_STORE

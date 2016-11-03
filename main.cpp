@@ -38,6 +38,8 @@ along with GASW.  If not, see <http://www.gnu.org/licenses/>.
 #include <sys/time.h>
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
+#include <cl_platform.h>
+
 #else
 #include <CL/cl.h>
 #endif
@@ -45,7 +47,6 @@ along with GASW.  If not, see <http://www.gnu.org/licenses/>.
 
 
 Options options;
-
 
 int main(int argc, char* argv[])
 {
@@ -564,9 +565,9 @@ int main(int argc, char* argv[])
             NULL);
 
 
-    printf("h %d\n", sequences[1]);
-    printf("h %d\n", sequences[2]);
-    printf("h %d\n", sequences[3]);
+   // printf("h %s\n", ()sequences[0]);
+   /* printf("h %d\n", blockOffsets[2]);
+    printf("h %d\n", blockOffsets[3]);*/
 
     bufferSeqNums = clCreateBuffer(
             context,
@@ -589,7 +590,7 @@ int main(int argc, char* argv[])
     bufferSequences = clCreateBuffer(
             context,
             CL_MEM_READ_ONLY,
-            metadata.numSequences*sizeof(seqType),
+            blobSize*sizeof(seqType),
             NULL,
             &status);
 
@@ -598,7 +599,7 @@ int main(int argc, char* argv[])
             bufferSequences,
             CL_FALSE,
             0,
-            metadata.numSequences*sizeof(seqType),
+            blobSize*sizeof(seqType),
             sequences,
             0,
             NULL,
@@ -626,42 +627,22 @@ int main(int argc, char* argv[])
             NULL,
             &status);
 
-  /*  status |= clEnqueueWriteBuffer (
-            cmdQueue,
-            bufferScores,
-            CL_FALSE,
-            0,
-            scoreArraySize,
-            scores,
-            0,
-            NULL,
-            NULL);*/
-
     if(status != CL_SUCCESS){
         printf("error in step 6, creating buffer for score array\n");
         exit(-1);
     }
-/*
-    cl_mem bufferNumGroups;
 
-    bufferNumGroups = clCreateBuffer(
-            context,
-            CL_MEM_READ_ONLY,
-            sizeof(size_t),
-            NULL,
-            &status);
+    
 
-    status |= clEnqueueWriteBuffer (
-            cmdQueue,
-            bufferNumGroups,
-            CL_FALSE,
-            0,
-            sizeof(size_t),
-            (size_t*) metadata.numSequences,
-            0,
-            NULL,
-            NULL);
-*/
+    /*    seqType* seque = &sequences[0];
+       seqType8 stype;
+       stype = *(seqType8*)seque;
+       //(11, 15, 18, 18, 18, 10, 9)
+   /*   __cl_char8 chars =stype.v8.z;
+
+       printf("seq %d\n", chars.xx);*/
+    //printf("sequences size %d\n", (int) (sizeof(sequences) / sizeof(seqType)));
+
     if(status != CL_SUCCESS){
         printf("error in step 6, creating buffer for numgroups\n");
         exit(-1);
@@ -706,7 +687,6 @@ int main(int argc, char* argv[])
             &status);
     free(mulBuffer);
 
-
     // Build (compile) the program for the devices with
     // clBuildProgram()
     const char options[] = "-cl-std=CL1.2 -I./";
@@ -745,15 +725,6 @@ int main(int argc, char* argv[])
     // STEP 9: Set Kernel Arguments
     //-----------------------------------------------------------------
 
-    /*
-     * int numGroups, scoreType* scores, const GPUdb::blockOffsetType* blockOffsets,
-     * const GPUdb::seqNumType* seqNums, const GPUdb::seqType* sequences,  TempData2* const tempColumns
-     *
-     * int numGroups = getNumBlocks() * BLOCK_SIZE
-     * unsigned int* blockOffsets = getBlockOffsets();
-     * unsigned int* seqNums = getNumSequences();
-     * sequences =
-     * */
     status |= clSetKernelArg(
             clKernel,
             0,
@@ -783,23 +754,7 @@ int main(int argc, char* argv[])
             4,
             sizeof(cl_mem),
             &bufferSequences);
-/*
-    status  = clSetKernelArg(
-            clKernel,
-            0,
-            sizeof(cl_mem),
-            &d_bufferQueryProfile);
-    status |= clSetKernelArg(
-            clKernel,
-            1,
-            sizeof(cl_mem),
-            &bufferBlobProfile);
-    status |= clSetKernelArg(
-            clKernel,
-            2,
-            sizeof(cl_mem),
-            &bufferScores);
-*/
+
 
     if(status != CL_SUCCESS){
         printf("error in step 9: %s\n", get_error_string(status));
