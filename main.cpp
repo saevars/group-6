@@ -44,7 +44,7 @@ along with GASW.  If not, see <http://www.gnu.org/licenses/>.
 #include <CL/cl.h>
 #endif
 
-
+const int noOfThreads = 1024;
 
 Options options;
 
@@ -510,29 +510,6 @@ int main(int argc, char* argv[])
     // STEP 6.1: Copy queryprofile
     //----------------------------------------------------------------
 
-
-    /*    cl_image_desc image_desc;
-       image_desc.image_type = CL_MEM_OBJECT_IMAGE2D;
-       image_desc.image_width = WHOLE_AMOUNT_OF(queryProfileLength, sizeof(queryType));
-       image_desc.image_height = NUM_AMINCIDS;
-   /*    image_desc.image_array_size = 1;
-       image_desc.image_row_pitch = 0;
-       image_desc.image_slice_pitch = 0;
-       image_desc.num_mip_levels = 0;
-       image_desc.num_samples = 0;
-       image_desc.buffer = NULL;
-
-    cl_image_format clImageFormat;
-    clImageFormat.image_channel_order = CL_RGBA ;
-    clImageFormat.image_channel_data_type = CL_SIGNED_INT8;
-
-    bufferQueryProfile = clCreateImage(context,
-                                     CL_MEM_READ_ONLY,
-                                     &clImageFormat,
-                                     &image_desc,
-                                     bufferQueryProfile,
-                                     &status);
-    */
     cl_mem bufferQueryProfile;
 
     //queryProfile = new substType[qpSize];
@@ -573,6 +550,25 @@ int main(int argc, char* argv[])
         printf("error in step 6, enqueue write buffer for query profile \n");
         exit(-1);
     }
+
+
+    size_t queryLengthDiv2InChunks = WHOLE_AMOUNT_OF(getSequenceLength(0)/2,sizeof(queryType));
+    int matrixSize = (int)queryLengthDiv2InChunks * sizeof(queryType) * sizeof(TempData2) *noOfThreads;
+
+    cl_mem tempBuffer;
+
+    tempBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, matrixSize, NULL, &status);
+
+ /*   status = clEnqueueWriteBuffer(cmdQueue,
+                                  tempBuffer,
+                                  CL_FALSE,
+                                  0,
+                                  matrixSize,
+                                  queryProfile,
+                                  0,
+                                  NULL,
+                                  NULL);
+*/
 
 //--------------------------------------------------------------------    
     //----------------------------------------------------------------
@@ -798,6 +794,12 @@ int main(int argc, char* argv[])
             sizeof(cl_mem),
             &bufferQueryProfile);
 
+    status |= clSetKernelArg(
+            clKernel,
+            6,
+            sizeof(cl_mem),
+            &tempBuffer);
+
 
     if(status != CL_SUCCESS){
         printf("error in step 9: %s\n", get_error_string(status));
@@ -819,7 +821,7 @@ int main(int argc, char* argv[])
     //Time the kernel yourself (look at OpenCL profiling)
 
     size_t globalWorkSize[2];
-    globalWorkSize[0] = metadata.numSequences;//CL_DEVICE_MAX_WORK_ITEM_SIZES;
+    globalWorkSize[0] = noOfThreads;//metadata.numSequences;//CL_DEVICE_MAX_WORK_ITEM_SIZES;
     globalWorkSize[1] = 1;// metadata.numSequences;
 
     cl_event done;
