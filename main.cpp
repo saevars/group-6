@@ -45,6 +45,7 @@ along with GASW.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 const int noOfThreads = 1024;
+const int localSize = 8;
 
 Options options;
 
@@ -530,6 +531,7 @@ int main(int argc, char* argv[])
         printf("%d: %d \n", seque[i], queryProfile[i]);
     }
     printf("\n");*/
+
     if(status != CL_SUCCESS){
         printf("error in step 6, creating buffer for query profile \n");
         exit(-1);
@@ -641,7 +643,7 @@ int main(int argc, char* argv[])
         printf("error in step 6, enqueue write buffer for database \n");
         exit(-1);
     }
-
+    printf("mat size %d\n", matrixSize);
 //--------------------------------------------------------------------  
     //----------------------------------------------------------------
     // STEP 6.3: Prepare Output array host and device
@@ -757,12 +759,12 @@ int main(int argc, char* argv[])
     //-----------------------------------------------------------------
     // STEP 9: Set Kernel Arguments
     //-----------------------------------------------------------------
-
+    size_t numBlocks = getNumBlocks() * BLOCK_SIZE;
     status |= clSetKernelArg(
             clKernel,
             0,
             sizeof(size_t),
-            &metadata.numSequences);
+            &numBlocks);
 
     status |= clSetKernelArg(
             clKernel,
@@ -820,10 +822,13 @@ int main(int argc, char* argv[])
     //-------------------------------------------------------------------
     //Time the kernel yourself (look at OpenCL profiling)
 
-    size_t globalWorkSize[2];
-    globalWorkSize[0] = noOfThreads;//metadata.numSequences;//CL_DEVICE_MAX_WORK_ITEM_SIZES;
-    globalWorkSize[1] = 1;// metadata.numSequences;
+    size_t globalWorkSize[2] = {noOfThreads, 1};
+   // globalWorkSize[0] = noOfThreads;//metadata.numSequences;//CL_DEVICE_MAX_WORK_ITEM_SIZES;
+   // globalWorkSize[1] = 1;// metadata.numSequences;
 
+    size_t localWorkSize[2] = {localSize, 1};
+    //localWorkSize[0] = localSize;//metadata.numSequences;//CL_DEVICE_MAX_WORK_ITEM_SIZES;
+    //localWorkSize[1] = 1;// metadata.numSequences;*/
     cl_event done;
 
     status |= clEnqueueNDRangeKernel(
@@ -832,7 +837,7 @@ int main(int argc, char* argv[])
             2,
             NULL,
             globalWorkSize,
-            NULL,
+            localWorkSize,
             0,
             NULL,
             &done);
@@ -894,7 +899,7 @@ int main(int argc, char* argv[])
     
     //Display results
     puts("Results:");
-    for(size_t i=0;i < std::min(5,(int)getNumSequences());i++)  //(int)options.listSize
+    for(size_t i=0;i < std::min(10,(int)getNumSequences());i++)  //(int)options.listSize
     {
         printf("%3ld. %-50.50s\t SCORE: %d\n",i,getDescription(sortScores[i].index),sortScores[i].score);
     }
