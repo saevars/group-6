@@ -385,7 +385,7 @@ int main(int argc, char* argv[])
     size_t seqLength = getSequenceLength(0);
     
     queryProfileLength = WHOLE_AMOUNT_OF(getSequenceLength(0),sizeof(queryType))*sizeof(queryType);
-    //printf("queryProfileLength : %d \n", queryProfileLength);
+    printf("queryProfileLength : %d \n", queryProfileLength);
     char* seq = getSequence(0);
     size_t qpSize = queryProfileLength*NUM_AMINO_ACIDS;
     queryProfile = new substType[qpSize];
@@ -396,6 +396,7 @@ int main(int argc, char* argv[])
     }
     for(size_t j=0;j<NUM_AMINO_ACIDS;j++)
     {
+      //  printf("j=%d\n", j);
         char d = ALPHABET[j];
         for(size_t i=0;i<queryProfileLength;i++)
         {
@@ -408,8 +409,10 @@ int main(int argc, char* argv[])
                 s =mapMatrix[q][d];
             }
             queryProfile[j*queryProfileLength+i] = s;
+        //    printf("%d, ", s);
 
         }
+      //  printf("\n");
     }
     
 //------------------------------------------------------------
@@ -506,25 +509,58 @@ int main(int argc, char* argv[])
     //----------------------------------------------------------------
     // STEP 6.1: Copy queryprofile
     //----------------------------------------------------------------
-    cl_mem d_bufferQueryProfile;
-    
+
+
+    /*    cl_image_desc image_desc;
+       image_desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+       image_desc.image_width = WHOLE_AMOUNT_OF(queryProfileLength, sizeof(queryType));
+       image_desc.image_height = NUM_AMINCIDS;
+   /*    image_desc.image_array_size = 1;
+       image_desc.image_row_pitch = 0;
+       image_desc.image_slice_pitch = 0;
+       image_desc.num_mip_levels = 0;
+       image_desc.num_samples = 0;
+       image_desc.buffer = NULL;
+
+    cl_image_format clImageFormat;
+    clImageFormat.image_channel_order = CL_RGBA ;
+    clImageFormat.image_channel_data_type = CL_SIGNED_INT8;
+
+    bufferQueryProfile = clCreateImage(context,
+                                     CL_MEM_READ_ONLY,
+                                     &clImageFormat,
+                                     &image_desc,
+                                     bufferQueryProfile,
+                                     &status);
+    */
+    cl_mem bufferQueryProfile;
+
     //queryProfile = new substType[qpSize];
-    
-    d_bufferQueryProfile = clCreateBuffer(
-                                    context,
-                                    CL_MEM_READ_ONLY,
-                                    qpSize*sizeof(substType),
-                                    NULL,
-                                    &status);
-    
+
+    bufferQueryProfile = clCreateBuffer(
+            context,
+            CL_MEM_READ_ONLY,
+            qpSize*sizeof(substType),
+            NULL,
+            &status);
+
+/*    int i=0;
+    char* seque = getSequence(0);
+
+
+    for (long i = 0; i < queryProfileLength*NUM_AMINO_ACIDS; i++){
+        //if (i % (queryProfileLength/2) == 0) printf("\n");
+        printf("%d: %d \n", seque[i], queryProfile[i]);
+    }
+    printf("\n");*/
     if(status != CL_SUCCESS){
         printf("error in step 6, creating buffer for query profile \n");
         exit(-1);
     }
-    /*
+
     status = clEnqueueWriteBuffer (
                                    cmdQueue,
-                                   d_bufferQueryProfile,
+                                   bufferQueryProfile,
                                    CL_FALSE,
                                    0,
                                    qpSize*sizeof(substType),
@@ -537,7 +573,7 @@ int main(int argc, char* argv[])
         printf("error in step 6, enqueue write buffer for query profile \n");
         exit(-1);
     }
-  */
+
 //--------------------------------------------------------------------    
     //----------------------------------------------------------------
     // STEP 6.2: Copy database to GPU
@@ -632,7 +668,8 @@ int main(int argc, char* argv[])
         exit(-1);
     }
 
-    
+
+
 
     /*    seqType* seque = &sequences[0];
        seqType8 stype;
@@ -755,6 +792,12 @@ int main(int argc, char* argv[])
             sizeof(cl_mem),
             &bufferSequences);
 
+    status |= clSetKernelArg(
+            clKernel,
+            5,
+            sizeof(cl_mem),
+            &bufferQueryProfile);
+
 
     if(status != CL_SUCCESS){
         printf("error in step 9: %s\n", get_error_string(status));
@@ -861,7 +904,7 @@ int main(int argc, char* argv[])
     clReleaseKernel(clKernel);
     clReleaseProgram(program);
     clReleaseCommandQueue(cmdQueue);
-    clReleaseMemObject(d_bufferQueryProfile);
+    clReleaseMemObject(bufferQueryProfile);
     clReleaseMemObject(bufferBlockOffsets);
     clReleaseMemObject(bufferScores);
     clReleaseContext(context);

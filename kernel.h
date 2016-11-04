@@ -12,6 +12,7 @@ typedef unsigned int seqNumType;
 //typedef cl_char8 seqType8;
 
 typedef char4 seqType4;
+typedef char substType;
 
 typedef struct seqType8
 {
