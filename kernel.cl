@@ -4,12 +4,12 @@
 constant short BLOCK_SIZE = 16;
 constant short SUBBLOCK_SIZE = 8;
 constant short LOG2_BLOCKSIZE = 4;
-constant int queryProfileLength = 256;
+constant int queryProfileLength = 320;
 constant int noOfThreads = 1024;
 constant int gapPenaltyTotal = -12;
 constant int gapExtendPenalty = -2;
 
-char4 populateSubstScoreFromQueryProfile(substType *queryProfile, char a, int j){
+char4 populateSubstScoreFromQueryProfile(global substType *queryProfile, char a, int j){
     char4 score;
     score.x = queryProfile[a * queryProfileLength + 4*j];
     score.y = queryProfile[a * queryProfileLength + 4*j+1];
@@ -60,8 +60,8 @@ residue alignResidues(residue res, char4 substScore){//, char4 substScores){
 /*
  * alignWithQuery((substType *)queryProfile, (seqType8) s,
                        (TempData2*) tempColumn, (scoreType) maxScore, column);*/
-scoreType alignWithQuery(substType *queryProfile, seqType8 s,
-                    TempData2*  tempColumn, scoreType maxScore, int column, seqNumType seqNum){
+scoreType alignWithQuery(global substType *queryProfile, char8 s,
+                    global TempData2*  tempColumn, scoreType maxScore, int column, seqNumType seqNum){
 
     //Set the top related values to 0 as we're at the top of the matrix
     scoreType8 top = {0,0,0,0,0,0,0,0};
@@ -97,7 +97,7 @@ scoreType alignWithQuery(substType *queryProfile, seqType8 s,
 
 
         res.maxScore = maxScore;
-        
+
 
         res.left = left;
         res.ixLeft = ixLeft;
@@ -112,42 +112,34 @@ scoreType alignWithQuery(substType *queryProfile, seqType8 s,
 //                   res.maxScore);
 //        }
 
-        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.a.x, j);
+        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.lo.x, j);
         res2 = alignResidues((residue)res, (char4) substScores);
 
         top.a.x = (scoreType)res2.top;
         IyTop.lo.x = res2.IyTop;
 
-
-
-
         res2.top = (scoreType)top.a.y;
         res2.IyTop = IyTop.lo.y;
 
-        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.a.y, j);
+        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.lo.y, j);
         res = alignResidues((residue)res2, (char4) substScores);
 
         top.a.y = (scoreType)res.top;
         IyTop.lo.y = res.IyTop;
 
-
-
-
         res.top = (scoreType)top.a.z;
         res.IyTop = IyTop.lo.z;
 
-        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.a.z, j);
+        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.lo.z, j);
         res2 = alignResidues((residue)res, (char4) substScores);
 
         top.a.z = (scoreType)res2.top;
         IyTop.lo.z= res2.IyTop;
 
-
-
         res2.top = (scoreType)top.a.w;
         res2.IyTop = IyTop.lo.w;
 
-        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.a.w, j);
+        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.lo.w, j);
         res = alignResidues((residue)res2, (char4) substScores);
 
         top.a.w = (scoreType)res.top;
@@ -157,7 +149,7 @@ scoreType alignWithQuery(substType *queryProfile, seqType8 s,
         res.top = (scoreType)top.b.x;
         res.IyTop = IyTop.hi.x;
 
-        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.b.x, j);
+        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.hi.x, j);
         res2 = alignResidues((residue)res, (char4) substScores);
 
         top.b.x = (scoreType)res2.top;
@@ -168,7 +160,7 @@ scoreType alignWithQuery(substType *queryProfile, seqType8 s,
         res2.top = (scoreType)top.b.y;
         res2.IyTop = IyTop.hi.y;
 
-        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.b.y, j);
+        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.hi.y, j);
         res = alignResidues((residue)res2, (char4) substScores);
 
         top.b.y = (scoreType)res.top;
@@ -180,7 +172,7 @@ scoreType alignWithQuery(substType *queryProfile, seqType8 s,
         res.top = (scoreType)top.b.z;
         res.IyTop = IyTop.hi.z;
 
-        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.b.z, j);
+        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.hi.z, j);
         res2 = alignResidues((residue)res, (char4) substScores);
 
         top.b.z = (scoreType)res2.top;
@@ -199,7 +191,7 @@ scoreType alignWithQuery(substType *queryProfile, seqType8 s,
                    res2.top, res2.topLeft, res2.IyTop);
         }*/
 
-        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.b.w, j);
+        substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.hi.w, j);
         res = alignResidues((residue)res2, (char4) substScores);
 
         top.b.w = (scoreType)res.top;
@@ -237,29 +229,57 @@ scoreType alignWithQuery(substType *queryProfile, seqType8 s,
 }
 
 
-void align(seqType* sequence, TempData2* tempColumn, seqNumType seqNum,
-           scoreType* scores, substType *queryProfile){
+void align(global seqType* sequence, global TempData2* tempColumn, seqNumType seqNum,
+          global scoreType* scores, global substType *queryProfile){
 
     scoreType maxScore=0;
     int column = 0; //Column = 0 means that alignment function will use 0 for 'left' values as there's no left column to read from
 
-    seqType8 s = *(seqType8*)sequence;
+    char8 s ;
+    __global seqType * tempSeq = sequence;
+    s.lo.x = * tempSeq++;
+    s.lo.y = * tempSeq++;
+    s.lo.z = * tempSeq++;
+    s.lo.w = * tempSeq++;
+    s.hi.x = * tempSeq++;
+    s.hi.y = * tempSeq++;
+    s.hi.z = * tempSeq++;
+    s.hi.w = * tempSeq++;
 
+    if (seqNum == 0){
+        printf("s.lo.x = %d \n", s.lo.x);
+        printf("s.lo.y = %d \n", s.lo.y);
+        printf("s.lo.z = %d \n", s.lo.z);
+        printf("s.lo.w = %d \n", s.lo.w);
+        printf("s.hi.x = %d \n", s.hi.x);
+        printf("s.hi.y = %d \n", s.hi.y);
+        printf("s.hi.z = %d \n", s.hi.z);
+        printf("s.hi.w = %d \n\n", s.hi.w);
+}
 
-    while(s.a.x!=' ') //Until terminating subblock
+    while(s.lo.x!=' ') //Until terminating subblock
     {
-        if(s.a.x=='#') //Subblock signifying concatenated sequences
+        if(s.lo.x=='#') //Subblock signifying concatenated sequences
         {
             scores[seqNum] = maxScore; //Set score for sequence
             seqNum++;
             column=maxScore=0;
         }
-        maxScore = alignWithQuery((substType *)queryProfile, (seqType8) s,
-                       (TempData2*) tempColumn, (scoreType) maxScore, column, (seqNumType) seqNum);
+        maxScore = alignWithQuery(queryProfile, s,
+                        tempColumn, (scoreType) maxScore, column, (seqNumType) seqNum);
 
         column=1;
         sequence += BLOCK_SIZE*SUBBLOCK_SIZE;
-        s = *(seqType8*)sequence;
+
+        tempSeq = sequence;
+        s.lo.x = * tempSeq++;
+        s.lo.y = * tempSeq++;
+        s.lo.z = * tempSeq++;
+        s.lo.w = * tempSeq++;
+        s.hi.x = * tempSeq++;
+        s.hi.y = * tempSeq++;
+        s.hi.z = * tempSeq++;
+        s.hi.w = * tempSeq++;
     }
 
         scores[seqNum] = maxScore;
@@ -269,15 +289,15 @@ void align(seqType* sequence, TempData2* tempColumn, seqNumType seqNum,
 /*printf("%d %d %d %d ", s.a.x, s.a.y, s.a.z, s.a.w);
         printf("%d %d %d %d ", s.b.x, s.b.y, s.b.z, s.b.w);
         printf("%d %d %d %d\n", s.b.w, s.b.x, s.b.y, s.b.z);*/
-__kernel void clkernel(const size_t numGroups,
-                       global scoreType *scores,
-                       global  blockOffsetType * blockOffsets,
-                        global seqNumType* seqNums,
-                        global seqType* sequences,
-                        global substType *queryProfile,
-                       global TempData2 * tempColumns
-                        //global unsigned short *vector_out
+__kernel void clkernel(const unsigned int numGroups,
+                      global scoreType *scores,
+                      global  blockOffsetType * blockOffsets,
+                      global  seqNumType* seqNums,
+                      global  seqType* sequences,
+                      global  substType *queryProfile,
+                       global TempData2 *tempColumns
 ){
+
     scoreType st;
     int groupNum = get_global_id(0);
     __global TempData2* tempColumn = &tempColumns[groupNum];
@@ -297,8 +317,8 @@ __kernel void clkernel(const size_t numGroups,
 __global seqType* sequence = &sequences[groupOffset];
 
         align(
-        (seqType*)sequence, (TempData2*) tempColumn, seqNum, (scoreType*) scores,
-        (substType *)queryProfile);
+         sequence, tempColumn, seqNum, scores,
+         queryProfile);
         groupNum += noOfThreads;
     /*
      * void align(seqType* sequence, TempData2* const tempColumn,
@@ -306,3 +326,4 @@ __global seqType* sequence = &sequences[groupOffset];
 
 }
 }
+

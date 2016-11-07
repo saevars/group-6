@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GASW.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #include "stdafx.h"
 #include "main.h"
 #include <wchar.h>
@@ -736,6 +736,7 @@ int main(int argc, char* argv[])
     if(status != CL_SUCCESS) {
         printf("%s\n", get_error_string(status));
         printf("error in step 7\n");
+
         // Determine the size of the log
         size_t log_size;
         clGetProgramBuildInfo(program, devices[device_id], CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
@@ -748,6 +749,7 @@ int main(int argc, char* argv[])
 
         // Print the log
         printf("%s\n", log);
+
         exit(-1);
     }
 
@@ -777,46 +779,105 @@ int main(int argc, char* argv[])
             0,
             sizeof(cl_int),
             &numBlocks);
-
+    
+    if(status != CL_SUCCESS){
+        printf("0error in step 9: %s\n", get_error_string(status));
+        // Determine the size of the log
+        size_t log_size;
+        clGetProgramBuildInfo(program, devices[device_id], CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+        
+        // Allocate memory for the log
+        char *log = (char *) malloc(log_size);
+        
+        // Get the log
+        clGetProgramBuildInfo(program, devices[device_id], CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
+        
+        // Print the log
+        printf("%s\n", log);
+        exit(-1);
+    }
+    
     status |= clSetKernelArg(
             clKernel,
             1,
             sizeof(cl_mem),
             &bufferScores);
+    
+    if(status != CL_SUCCESS){
+        printf("1error in step 9: %s\n", get_error_string(status));
+        // Determine the size of the log
+        size_t log_size;
+        clGetProgramBuildInfo(program, devices[device_id], CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
 
+        // Allocate memory for the log
+        char *log = (char *) malloc(log_size);
+
+        // Get the log
+        clGetProgramBuildInfo(program, devices[device_id], CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
+
+        // Print the log
+        printf("%s\n", log);
+        exit(-1);
+    }
+    
     status |= clSetKernelArg(
             clKernel,
             2,
             sizeof(cl_mem),
             &bufferBlockOffsets);
-
+    
+    if(status != CL_SUCCESS){
+        printf("2error in step 9: %s\n", get_error_string(status));
+        exit(-1);
+    }
+    
     status |= clSetKernelArg(
             clKernel,
             3,
             sizeof(cl_mem),
             &bufferSeqNums);
-
+    
+    if(status != CL_SUCCESS){
+        printf("3error in step 9: %s\n", get_error_string(status));
+        exit(-1);
+    }
+    
     status |= clSetKernelArg(
             clKernel,
             4,
             sizeof(cl_mem),
             &bufferSequences);
-
+    
+    if(status != CL_SUCCESS){
+        printf("4error in step 9: %s\n", get_error_string(status));
+        exit(-1);
+    }
+    
     status |= clSetKernelArg(
             clKernel,
             5,
             sizeof(cl_mem),
             &bufferQueryProfile);
-
+    
+    if(status != CL_SUCCESS){
+        printf("5error in step 9: %s\n", get_error_string(status));
+        exit(-1);
+    }
+    
     status |= clSetKernelArg(
             clKernel,
             6,
             sizeof(cl_mem),
             &tempBuffer);
-
+    
+    if(status != CL_SUCCESS){
+        printf("6error in step 9: %s\n", get_error_string(status));
+        exit(-1);
+    }
+    
 
     if(status != CL_SUCCESS){
-        printf("error in step 9: %s\n", get_error_string(status));
+        printf("XXXXerror in step 9: %s\n", get_error_string(status));
         exit(-1);
     }
 
