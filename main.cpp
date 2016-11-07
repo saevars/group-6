@@ -736,6 +736,18 @@ int main(int argc, char* argv[])
     if(status != CL_SUCCESS) {
         printf("%s\n", get_error_string(status));
         printf("error in step 7\n");
+        // Determine the size of the log
+        size_t log_size;
+        clGetProgramBuildInfo(program, devices[device_id], CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+
+        // Allocate memory for the log
+        char *log = (char *) malloc(log_size);
+
+        // Get the log
+        clGetProgramBuildInfo(program, devices[device_id], CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
+
+        // Print the log
+        printf("%s\n", log);
         exit(-1);
     }
 
@@ -759,11 +771,11 @@ int main(int argc, char* argv[])
     //-----------------------------------------------------------------
     // STEP 9: Set Kernel Arguments
     //-----------------------------------------------------------------
-    size_t numBlocks = getNumBlocks() * BLOCK_SIZE;
+    cl_int numBlocks = getNumBlocks() * BLOCK_SIZE;
     status |= clSetKernelArg(
             clKernel,
             0,
-            sizeof(size_t),
+            sizeof(cl_int),
             &numBlocks);
 
     status |= clSetKernelArg(
