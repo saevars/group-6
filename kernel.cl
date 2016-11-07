@@ -105,7 +105,7 @@ scoreType alignWithQuery(substType *queryProfile, seqType8 s,
 
 
         res.top = (scoreType)top.a.x;
-        res.IyTop = IyTop[0];
+        res.IyTop = IyTop.lo.x;
 
 //        if (j == 0 && seqNum == 15){
 //            printf("j = 1; after maxscore = %d\n",
@@ -116,81 +116,81 @@ scoreType alignWithQuery(substType *queryProfile, seqType8 s,
         res2 = alignResidues((residue)res, (char4) substScores);
 
         top.a.x = (scoreType)res2.top;
-        IyTop[0] = res2.IyTop;
+        IyTop.lo.x = res2.IyTop;
 
 
 
 
         res2.top = (scoreType)top.a.y;
-        res2.IyTop = IyTop[1];
+        res2.IyTop = IyTop.lo.y;
 
         substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.a.y, j);
         res = alignResidues((residue)res2, (char4) substScores);
 
         top.a.y = (scoreType)res.top;
-        IyTop[1] = res.IyTop;
+        IyTop.lo.y = res.IyTop;
 
 
 
 
         res.top = (scoreType)top.a.z;
-        res.IyTop = IyTop[2];
+        res.IyTop = IyTop.lo.z;
 
         substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.a.z, j);
         res2 = alignResidues((residue)res, (char4) substScores);
 
         top.a.z = (scoreType)res2.top;
-        IyTop[2] = res2.IyTop;
+        IyTop.lo.z= res2.IyTop;
 
 
 
         res2.top = (scoreType)top.a.w;
-        res2.IyTop = IyTop[3];
+        res2.IyTop = IyTop.lo.w;
 
         substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.a.w, j);
         res = alignResidues((residue)res2, (char4) substScores);
 
         top.a.w = (scoreType)res.top;
-        IyTop[3] = res.IyTop;
+        IyTop.lo.w = res.IyTop;
 
 
         res.top = (scoreType)top.b.x;
-        res.IyTop = IyTop[4];
+        res.IyTop = IyTop.hi.x;
 
         substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.b.x, j);
         res2 = alignResidues((residue)res, (char4) substScores);
 
         top.b.x = (scoreType)res2.top;
-        IyTop[4] = res2.IyTop;
+        IyTop.hi.x = res2.IyTop;
 
 
 
         res2.top = (scoreType)top.b.y;
-        res2.IyTop = IyTop[5];
+        res2.IyTop = IyTop.hi.y;
 
         substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.b.y, j);
         res = alignResidues((residue)res2, (char4) substScores);
 
         top.b.y = (scoreType)res.top;
-        IyTop[5] = res.IyTop;
+        IyTop.hi.y = res.IyTop;
 
 
 
 
         res.top = (scoreType)top.b.z;
-        res.IyTop = IyTop[6];
+        res.IyTop = IyTop.hi.z;
 
         substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.b.z, j);
         res2 = alignResidues((residue)res, (char4) substScores);
 
         top.b.z = (scoreType)res2.top;
-        IyTop[6] = res2.IyTop;
+        IyTop.hi.z = res2.IyTop;
         /*
          * ********
          */
 
         res2.top = (scoreType)top.b.w;
-        res2.IyTop = IyTop[7];
+        res2.IyTop = IyTop.hi.w;
 
         /*if (j == 1){
             printf("before maxscore = %d, left = {%d, %d, %d, %d}, ixLeft = {%d, %d, %d, %d}, top = %d, topLeft = %d, IyTop = %d\n",
@@ -203,7 +203,7 @@ scoreType alignWithQuery(substType *queryProfile, seqType8 s,
         res = alignResidues((residue)res2, (char4) substScores);
 
         top.b.w = (scoreType)res.top;
-        IyTop[7] = res.IyTop;
+        IyTop.hi.w = res.IyTop;
 
 
 
