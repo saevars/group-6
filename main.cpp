@@ -45,7 +45,7 @@ along with GASW.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 const int noOfThreads = 1024;
-const int localSize = 8;
+const int localSize = 128;
 
 Options options;
 
@@ -557,24 +557,24 @@ int main(int argc, char* argv[])
     size_t queryLengthDiv2InChunks = WHOLE_AMOUNT_OF(getSequenceLength(0)/2,sizeof(queryType));
     int matrixSize = (int)queryLengthDiv2InChunks * sizeof(queryType) * sizeof(TempData2) *noOfThreads;
 
-    matrixSize = 1310720;  //1310720
+    matrixSize = 5300;
     cl_mem tempBuffer;
-//    int *tmpBufferH;
-//    tmpBufferH = new int[matrixSize];
-//    for (int i = 0; i < matrixSize; i++){
-//        tmpBufferH[i] = -1;
-//    }
+    int *tmpBufferH;
+    tmpBufferH = new int[matrixSize];
+    for (int i = 0; i < matrixSize; i++){
+        tmpBufferH[i] = -1;
+    }
     tempBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, matrixSize, NULL, &status);
 
-//    status = clEnqueueWriteBuffer(cmdQueue,
-//                                  tempBuffer,
-//                                  CL_FALSE,
-//                                  0,
-//                                  matrixSize,
-//                                  tmpBufferH,
-//                                  0,
-//                                  NULL,
-//                                  NULL);
+    status = clEnqueueWriteBuffer(cmdQueue,
+                                  tempBuffer,
+                                  CL_FALSE,
+                                  0,
+                                  matrixSize,
+                                  tmpBufferH,
+                                  0,
+                                  NULL,
+                                  NULL);
 
 
 //--------------------------------------------------------------------    
@@ -900,9 +900,6 @@ int main(int argc, char* argv[])
     //-------------------------------------------------------------------
     //Time the kernel yourself (look at OpenCL profiling)
 
-
-    clock_t start = clock();
-
     size_t globalWorkSize[2] = {noOfThreads, 1};
    // globalWorkSize[0] = noOfThreads;//metadata.numSequences;//CL_DEVICE_MAX_WORK_ITEM_SIZES;
    // globalWorkSize[1] = 1;// metadata.numSequences;
@@ -931,11 +928,6 @@ int main(int argc, char* argv[])
         printf("%d\n", status);
         exit(-1);
     }
-
-    clock_t stop = clock();
-    double time=(stop-start) / (double)CLOCKS_PER_SEC;
-
-    printf("Done. Seconds: %f, n\n",seconds);
 
     //scoreType *result = (scoreType *)malloc(scoreArraySize);
     status = clEnqueueReadBuffer(

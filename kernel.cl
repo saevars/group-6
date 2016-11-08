@@ -234,7 +234,7 @@ scoreType alignWithQuery(global substType *queryProfile, char8 s,
 }
 
 
-void align(global seqType* sequence, global TempData2* tempColumn, seqNumType seqNum,
+void align(global seqType* sequence, global const TempData2* tempColumn, seqNumType seqNum,
           global scoreType* scores, global substType *queryProfile){
 
     scoreType maxScore=0;
@@ -322,13 +322,13 @@ __kernel void clkernel(const unsigned int numGroups,
     int idx = get_global_id(0);
     int groupNum = idx;
 
-    __global TempData2* tempColumn = &tempColumns[idx];
+    __global const TempData2 *tempColumn = &tempColumns[idx];
 
     while  (groupNum < numGroups){
         seqNumType seqNum=seqNums[groupNum];
 
         int seqBlock = groupNum >> LOG2_BLOCKSIZE;
-        int groupNumInBlock = groupNum & BLOCK_SIZE -1 ;//% (BLOCK_SIZE);
+        int groupNumInBlock = groupNum % (BLOCK_SIZE);
         int groupOffset = blockOffsets[seqBlock]+(groupNumInBlock*SUBBLOCK_SIZE);
 
         __global seqType* sequence = &sequences[groupOffset];
