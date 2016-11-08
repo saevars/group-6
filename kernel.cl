@@ -77,7 +77,8 @@ scoreType alignWithQuery(global substType *queryProfile, char8 s,
 
     for(int j = 0; j < queryProfileLength/4; j++)
     {
-        if(seqNum == 16){
+        if(j == 79){
+                //printf("max score is  %d \n", maxScore);
       //      printf("j is %d and tempColumn %d %d \n", j, tempColumn[0].a, tempColumn[0].b);
         }
         TempData2 t = tempColumn[0];
@@ -85,7 +86,12 @@ scoreType alignWithQuery(global substType *queryProfile, char8 s,
         ixLeft.x = column* t.a.Ix;
         left.y = column*t.b.F;
         ixLeft.y = column* t.b.Ix;
-
+//            if(j == 79){
+//            printf("left.x =  %d \n ",left.x  );
+//            printf("ixLeft.x  %d \n ",ixLeft .x );
+//            printf("left.y =  %d \n ",left.y  );
+//            printf("ixLeft.y  %d \n\n ",ixLeft.y  );
+//            }
         //Load second half of temporary column
         t = tempColumn[noOfThreads];
         left.z = column*t.a.F;
@@ -205,7 +211,6 @@ scoreType alignWithQuery(global substType *queryProfile, char8 s,
 
         //Save the two temporary column values
         t.a.F = res.left.x;
-
         t.a.Ix = res.ixLeft.x;
         t.b.F = res.left.y;
         t.b.Ix = res.ixLeft.y;
@@ -246,22 +251,24 @@ void align(global seqType* sequence, global TempData2* tempColumn, seqNumType se
     s.hi.z = * tempSeq++;
     s.hi.w = * tempSeq++;
 
-    if (seqNum == 0){
-        printf("s.lo.x = %d \n", s.lo.x);
-        printf("s.lo.y = %d \n", s.lo.y);
-        printf("s.lo.z = %d \n", s.lo.z);
-        printf("s.lo.w = %d \n", s.lo.w);
-        printf("s.hi.x = %d \n", s.hi.x);
-        printf("s.hi.y = %d \n", s.hi.y);
-        printf("s.hi.z = %d \n", s.hi.z);
-        printf("s.hi.w = %d \n\n", s.hi.w);
-}
+//    if (seqNum == 0){
+//        printf("s.lo.x = %d \n", s.lo.x);
+//        printf("s.lo.y = %d \n", s.lo.y);
+//        printf("s.lo.z = %d \n", s.lo.z);
+//        printf("s.lo.w = %d \n", s.lo.w);
+//        printf("s.hi.x = %d \n", s.hi.x);
+//        printf("s.hi.y = %d \n", s.hi.y);
+//        printf("s.hi.z = %d \n", s.hi.z);
+//        printf("s.hi.w = %d \n\n", s.hi.w);
+//}
 
     while(s.lo.x!=' ') //Until terminating subblock
     {
         if(s.lo.x=='#') //Subblock signifying concatenated sequences
         {
             scores[seqNum] = maxScore; //Set score for sequence
+            if (maxScore > 1000)
+                printf("2 maxScore %d \n", maxScore);
             seqNum++;
             column=maxScore=0;
         }
@@ -280,9 +287,22 @@ void align(global seqType* sequence, global TempData2* tempColumn, seqNumType se
         s.hi.y = * tempSeq++;
         s.hi.z = * tempSeq++;
         s.hi.w = * tempSeq++;
+
+//        if (seqNum == 0){
+//            printf("s.lo.x = %d \n", s.lo.x);
+//            printf("s.lo.y = %d \n", s.lo.y);
+//            printf("s.lo.z = %d \n", s.lo.z);
+//            printf("s.lo.w = %d \n", s.lo.w);
+//            printf("s.hi.x = %d \n", s.hi.x);
+//            printf("s.hi.y = %d \n", s.hi.y);
+//            printf("s.hi.z = %d \n", s.hi.z);
+//            printf("s.hi.w = %d \n\n", s.hi.w);
+//        }
     }
 
         scores[seqNum] = maxScore;
+        if (maxScore > 1000)
+            printf("1 maxScore %d \n", maxScore);
 }
 
 
@@ -295,35 +315,32 @@ __kernel void clkernel(const unsigned int numGroups,
                       global  seqNumType* seqNums,
                       global  seqType* sequences,
                       global  substType *queryProfile,
-                       global TempData2 *tempColumns
+                      global TempData2 *tempColumns
 ){
 
-    scoreType st;
-    int groupNum = get_global_id(0);
-    __global TempData2* tempColumn = &tempColumns[groupNum];
+    //printf("numGroups %d \n", numGroups);
+    int idx = get_global_id(0);
+    int groupNum = idx;
 
-  //  scores[xx] =  20;
-    if (groupNum < numGroups){
+    __global TempData2* tempColumn = &tempColumns[idx];
+
+    while  (groupNum < numGroups){
         seqNumType seqNum=seqNums[groupNum];
 
         int seqBlock = groupNum >> LOG2_BLOCKSIZE;
-        int groupNumInBlock = groupNum % (BLOCK_SIZE);
+        int groupNumInBlock = groupNum & BLOCK_SIZE -1 ;//% (BLOCK_SIZE);
         int groupOffset = blockOffsets[seqBlock]+(groupNumInBlock*SUBBLOCK_SIZE);
 
-       // printf("seq=%d, seqBlock=%d, gnib=%d, goffset=%d\n",
-         //   groupNum, seqBlock, groupNumInBlock, groupOffset);
+        __global seqType* sequence = &sequences[groupOffset];
 
-
-__global seqType* sequence = &sequences[groupOffset];
-
-        align(
-         sequence, tempColumn, seqNum, scores,
-         queryProfile);
+        align(sequence, tempColumn, seqNum, scores, queryProfile);
         groupNum += noOfThreads;
+        //printf("groupNum : %d \n",groupNum);
     /*
      * void align(seqType* sequence, TempData2* const tempColumn,
            seqSizeType& seqNum, scoreType* scores)*/
-
+//    printf("seq=%d, seqBlock=%d, gnib=%d, goffset=%d\n",
+//seqNum, seqBlock, groupNumInBlock, groupOffset);
 }
 }
 
