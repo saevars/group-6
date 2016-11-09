@@ -557,7 +557,6 @@ int main(int argc, char* argv[])
     size_t queryLengthDiv2InChunks = WHOLE_AMOUNT_OF(getSequenceLength(0)/2,sizeof(queryType));
     int matrixSize = (int)queryLengthDiv2InChunks * sizeof(queryType) * sizeof(TempData2) *noOfThreads;
 
-    matrixSize = 5300;
     cl_mem tempBuffer;
     int *tmpBufferH;
     tmpBufferH = new int[matrixSize];
@@ -778,29 +777,12 @@ int main(int argc, char* argv[])
     //-----------------------------------------------------------------
     // STEP 9: Set Kernel Arguments
     //-----------------------------------------------------------------
-    cl_int numBlocks = getNumBlocks() * BLOCK_SIZE;
+    cl_ulong numBlocks = getNumBlocks() * BLOCK_SIZE;
     status |= clSetKernelArg(
             clKernel,
             0,
-            sizeof(cl_int),
+            sizeof(cl_ulong),
             &numBlocks);
-    
-    if(status != CL_SUCCESS){
-        printf("0error in step 9: %s\n", get_error_string(status));
-        // Determine the size of the log
-        size_t log_size;
-        clGetProgramBuildInfo(program, devices[device_id], CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
-        
-        // Allocate memory for the log
-        char *log = (char *) malloc(log_size);
-        
-        // Get the log
-        clGetProgramBuildInfo(program, devices[device_id], CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
-        
-        // Print the log
-        printf("%s\n", log);
-        exit(-1);
-    }
     
     status |= clSetKernelArg(
             clKernel,
@@ -808,81 +790,56 @@ int main(int argc, char* argv[])
             sizeof(cl_mem),
             &bufferScores);
     
-    if(status != CL_SUCCESS){
-        printf("1error in step 9: %s\n", get_error_string(status));
-        // Determine the size of the log
-        size_t log_size;
-        clGetProgramBuildInfo(program, devices[device_id], CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
-
-        // Allocate memory for the log
-        char *log = (char *) malloc(log_size);
-
-        // Get the log
-        clGetProgramBuildInfo(program, devices[device_id], CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
-
-        // Print the log
-        printf("%s\n", log);
-        exit(-1);
-    }
-    
     status |= clSetKernelArg(
             clKernel,
             2,
             sizeof(cl_mem),
             &bufferBlockOffsets);
     
-    if(status != CL_SUCCESS){
-        printf("2error in step 9: %s\n", get_error_string(status));
-        exit(-1);
-    }
-    
     status |= clSetKernelArg(
             clKernel,
             3,
             sizeof(cl_mem),
             &bufferSeqNums);
-    
-    if(status != CL_SUCCESS){
-        printf("3error in step 9: %s\n", get_error_string(status));
-        exit(-1);
-    }
-    
+
     status |= clSetKernelArg(
             clKernel,
             4,
             sizeof(cl_mem),
             &bufferSequences);
-    
-    if(status != CL_SUCCESS){
-        printf("4error in step 9: %s\n", get_error_string(status));
-        exit(-1);
-    }
-    
+
     status |= clSetKernelArg(
             clKernel,
             5,
             sizeof(cl_mem),
             &bufferQueryProfile);
-    
-    if(status != CL_SUCCESS){
-        printf("5error in step 9: %s\n", get_error_string(status));
-        exit(-1);
-    }
+
     
     status |= clSetKernelArg(
             clKernel,
             6,
             sizeof(cl_mem),
             &tempBuffer);
-    
-    if(status != CL_SUCCESS){
-        printf("6error in step 9: %s\n", get_error_string(status));
-        exit(-1);
-    }
-    
+
+    status |= clSetKernelArg(
+            clKernel,
+            7,
+            sizeof(cl_ulong),
+            &queryProfileLength);
+
+    cl_ulong queryLengthInChunks = WHOLE_AMOUNT_OF(getSequenceLength(0),sizeof(queryType));
+
+
+    status |= clSetKernelArg(
+            clKernel,
+            8,
+            sizeof(cl_ulong),
+            &queryLengthInChunks);
+
+
 
     if(status != CL_SUCCESS){
-        printf("XXXXerror in step 9: %s\n", get_error_string(status));
+        printf("error in step 9: %s\n", get_error_string(status));
         exit(-1);
     }
 
