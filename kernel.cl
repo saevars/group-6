@@ -301,7 +301,8 @@ __kernel void clkernel( const unsigned long numGroups,
                         global  substType *queryProfile,
                         global TempData2 *tempColumns,
                         const unsigned long queryLength,
-                        const unsigned long queryLengthInChunks
+                        const unsigned long queryLengthInChunks,
+                                read_only image2d_t queryProfileTex
 ){
 
     //printf("numGroups %d \n", numGroups);
@@ -311,6 +312,11 @@ __kernel void clkernel( const unsigned long numGroups,
     __global const TempData2 *tempColumn = &tempColumns[idx];
 
     while  (groupNum < numGroups){
+if(groupNum == 1){
+int2 coords = {0,0};
+int4 pix = read_imagei(queryProfileTex, coords);
+printf("%d %d %d %d\n", pix.x, pix.y, pix.z, pix.w);
+}
         seqNumType seqNum=seqNums[groupNum];
 
         int seqBlock = groupNum >> LOG2_BLOCKSIZE;

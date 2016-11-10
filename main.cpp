@@ -522,15 +522,8 @@ int main(int argc, char* argv[])
             NULL,
             &status);
 
-/*    int i=0;
-    char* seque = getSequence(0);
 
 
-    for (long i = 0; i < queryProfileLength*NUM_AMINO_ACIDS; i++){
-        //if (i % (queryProfileLength/2) == 0) printf("\n");
-        printf("%d: %d \n", seque[i], queryProfile[i]);
-    }
-    printf("\n");*/
 
     if(status != CL_SUCCESS){
         printf("error in step 6, creating buffer for query profile \n");
@@ -553,6 +546,24 @@ int main(int argc, char* argv[])
         exit(-1);
     }
 
+    cl_image_format imageFormat;
+    imageFormat.image_channel_order = CL_RGBA;
+    imageFormat.image_channel_data_type = CL_SIGNED_INT8;
+    size_t offset[3] = {0, 0, 0};
+    size_t dims[3] = {queryProfileLength/4, NUM_AMINO_ACIDS, 1};
+
+    cl_short pixel[4] = {1,2,3,4};
+
+    cl_mem bufferTexProfile;
+
+    bufferTexProfile = clCreateImage2D(context, CL_MEM_READ_ONLY, &imageFormat, queryProfileLength/4, NUM_AMINO_ACIDS,
+                                       0, NULL, &status);
+    status |= clEnqueueWriteImage(cmdQueue, bufferTexProfile, CL_TRUE, offset, dims, 0, 0, queryProfile, 0, NULL, NULL);
+
+    if(status != CL_SUCCESS){
+        printf("error in step 6, enqueue write image buffer for query profile \n");
+        exit(-1);
+    }
 
     size_t queryLengthDiv2InChunks = WHOLE_AMOUNT_OF(getSequenceLength(0)/2,sizeof(queryType));
     int matrixSize = (int)queryLengthDiv2InChunks * sizeof(queryType) * sizeof(TempData2) *noOfThreads;
@@ -824,6 +835,12 @@ int main(int argc, char* argv[])
     status |= clSetKernelArg(
             clKernel,
             7,
+            sizeof(cl_ulong),
+            &queryProfileLength);
+
+    status |= clSetKernelArg(
+            clKernel,
+            8,
             sizeof(cl_ulong),
             &queryProfileLength);
 
