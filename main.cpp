@@ -175,7 +175,7 @@ int main(int argc, char* argv[])
     cmdQueue = clCreateCommandQueue(
                                     context,
                                     devices[device_id],
-                                    0,
+                                    CL_QUEUE_PROFILING_ENABLE,
                                     &status);
     
     if(status != CL_SUCCESS){
@@ -688,8 +688,8 @@ int main(int argc, char* argv[])
     }
 
 
-//    timestamp_t cpend = get_timestamp();
-  //  seconds = cpend - cpstart;sizeof(cl_mem)
+   timestamp_t cpend = get_timestamp();
+   seconds = cpend - cpstart;//sizeof(cl_mem)
     //printf("Copy Time: %llu\n", seconds);
 
     char *mulFileName, *mulBuffer;
@@ -846,10 +846,10 @@ int main(int argc, char* argv[])
 
     timestamp_t argsend = get_timestamp();
     timestamp_t argstime = argsend - argsstart;
-    printf("OpenCL initialisation Time: %llu\n",clinittime);
-    printf("matrix, query and database initialisation Time (host): %llu\n",dbinittime);
-    printf("Mem Copy from host to device Time: %llu\n", seconds);
-    printf("Time for creating program and setting kernel args: %llu\n", argstime);
+    printf("OpenCL initialisation Time: %llu us\n",clinittime);
+    printf("matrix, query and database initialisation Time (host): %llu us\n",dbinittime);
+    printf("Mem Copy from host to device Time: %llu us\n", seconds);
+    printf("Time for creating program and setting kernel args: %llu us\n", argstime);
     
 //-----------------------------------------------------------------------
     //-------------------------------------------------------------------
@@ -865,7 +865,8 @@ int main(int argc, char* argv[])
     //localWorkSize[0] = localSize;//metadata.numSequences;//CL_DEVICE_MAX_WORK_ITEM_SIZES;
     //localWorkSize[1] = 1;// metadata.numSequences;*/
     cl_event kernelDone;
-    cl_event bufferDone;
+
+
 
     status |= clEnqueueNDRangeKernel(
             cmdQueue,
@@ -878,6 +879,32 @@ int main(int argc, char* argv[])
             NULL,
             &kernelDone);
 
+    size_t timeSize;
+    
+    status = clGetEventProfilingInfo(
+            kernelDone,
+            CL_PROFILING_COMMAND_START,
+            0,
+            NULL,
+            &timeSize);
+
+    cl_ulong kernelStartTime;
+
+    status = clGetEventProfilingInfo(
+            kernelDone,
+            CL_PROFILING_COMMAND_START,
+            timeSize,
+            &kernelStartTime,
+            NULL);
+
+    cl_ulong kernelEndTime;
+
+    status = clGetEventProfilingInfo(
+            kernelDone,
+            CL_PROFILING_COMMAND_END,
+            timeSize,
+            &kernelEndTime,
+            NULL);
 
     if(status != CL_SUCCESS){
         clWaitForEvents (1,&kernelDone);
@@ -887,33 +914,9 @@ int main(int argc, char* argv[])
         exit(-1);
     }
 
-    size_t timeSize;
+    
 
-    status = clGetEventProfilingInfo(
-            kernelDone,
-            CL_PROFILING_COMMAND_START,
-            0,
-            NULL,
-            &timeSize);
-
-    cl_ulong kernelStart;
-    cl_ulong kernelEnd;
-
-    status = clGetEventProfilingInfo(
-            kernelDone,
-            CL_PROFILING_COMMAND_START,
-            timeSize,
-            &kernelStart,
-            NULL);
-
-    status = clGetEventProfilingInfo(
-            kernelDone,
-            CL_PROFILING_COMMAND_END,
-            timeSize,
-            &kernelEnd,
-            NULL);
-
-    printf("clKernel took %lu ns\n", kernelEnd - kernelStart);
+    printf("Total kernel execution time: %lu ns (%f seconds)\n", kernelEndTime - kernelStartTime, (float) (kernelEndTime - kernelStartTime) * 0.000000001);
 
     //scoreType *result = (scoreType *)malloc(scoreArraySize);
     status = clEnqueueReadBuffer(
@@ -925,7 +928,7 @@ int main(int argc, char* argv[])
             scores,
             1,
             &kernelDone,
-            &bufferDone);
+            NULL);
 
 
     if(status != CL_SUCCESS){
@@ -933,26 +936,6 @@ int main(int argc, char* argv[])
 
         exit(-1);
     }
-
-    cl_ulong bufferStart;
-    cl_ulong bufferEnd;
-
-    status = clGetEventProfilingInfo(
-            bufferDone,
-            CL_PROFILING_COMMAND_START,
-            timeSize,
-            &bufferStart,
-            NULL);
-
-    status = clGetEventProfilingInfo(
-            bufferDone,
-            CL_PROFILING_COMMAND_END,
-            timeSize,
-            &bufferEnd,
-            NULL);
-
-    printf("bufferScores took %lu - %lu = %lu ns\n", bufferEnd, bufferStart, bufferEnd - bufferStart);
-
 
     //printf("\nKernel computation Time (in ms) = %0.3f ms\n",  );
 
