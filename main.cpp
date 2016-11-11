@@ -410,10 +410,10 @@ int main(int argc, char* argv[])
                 s =mapMatrix[q][d];
             }
             queryProfile[j*queryProfileLength+i] = s;
-        //    printf("%d, ", s);
+            printf("%d, ", s);
 
         }
-      //  printf("\n");
+        printf("\n");
     }
     
 //------------------------------------------------------------
@@ -550,13 +550,11 @@ int main(int argc, char* argv[])
     imageFormat.image_channel_order = CL_RGBA;
     imageFormat.image_channel_data_type = CL_SIGNED_INT8;
     size_t offset[3] = {0, 0, 0};
-    size_t dims[3] = {queryProfileLength/4, NUM_AMINO_ACIDS, 1};
-
-    cl_short pixel[4] = {1,2,3,4};
+    size_t dims[3] = {queryProfileLength, NUM_AMINO_ACIDS, 1};
 
     cl_mem bufferTexProfile;
 
-    bufferTexProfile = clCreateImage2D(context, CL_MEM_READ_ONLY, &imageFormat, queryProfileLength/4, NUM_AMINO_ACIDS,
+    bufferTexProfile = clCreateImage2D(context, CL_MEM_READ_ONLY, &imageFormat, queryProfileLength, NUM_AMINO_ACIDS,
                                        0, NULL, &status);
     status |= clEnqueueWriteImage(cmdQueue, bufferTexProfile, CL_TRUE, offset, dims, 0, 0, queryProfile, 0, NULL, NULL);
 
@@ -837,21 +835,21 @@ int main(int argc, char* argv[])
             7,
             sizeof(cl_ulong),
             &queryProfileLength);
-
-    status |= clSetKernelArg(
-            clKernel,
-            8,
-            sizeof(cl_ulong),
-            &queryProfileLength);
-
     cl_ulong queryLengthInChunks = WHOLE_AMOUNT_OF(getSequenceLength(0),sizeof(queryType));
-
 
     status |= clSetKernelArg(
             clKernel,
             8,
             sizeof(cl_ulong),
             &queryLengthInChunks);
+
+
+
+    status |= clSetKernelArg(
+            clKernel,
+            9,
+            sizeof(cl_mem),
+            &bufferTexProfile);
 
 
 
