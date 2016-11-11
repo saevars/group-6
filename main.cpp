@@ -511,40 +511,6 @@ int main(int argc, char* argv[])
     // STEP 6.1: Copy queryprofile
     //----------------------------------------------------------------
 
-    cl_mem bufferQueryProfile;
-
-    //queryProfile = new substType[qpSize];
-
-    bufferQueryProfile = clCreateBuffer(
-            context,
-            CL_MEM_READ_ONLY,
-            qpSize*sizeof(substType),
-            NULL,
-            &status);
-
-
-
-
-    if(status != CL_SUCCESS){
-        printf("error in step 6, creating buffer for query profile \n");
-        exit(-1);
-    }
-
-    status = clEnqueueWriteBuffer (
-                                   cmdQueue,
-                                   bufferQueryProfile,
-                                   CL_FALSE,
-                                   0,
-                                   qpSize*sizeof(substType),
-                                   queryProfile,
-                                   0,
-                                   NULL,
-                                   NULL);
-
-    if(status != CL_SUCCESS){
-        printf("error in step 6, enqueue write buffer for query profile \n");
-        exit(-1);
-    }
 
     cl_ulong queryLengthInChunks = WHOLE_AMOUNT_OF(getSequenceLength(0),sizeof(queryType));
 
@@ -818,31 +784,22 @@ int main(int argc, char* argv[])
             4,
             sizeof(cl_mem),
             &bufferSequences);
-
-    status |= clSetKernelArg(
-            clKernel,
-            5,
-            sizeof(cl_mem),
-            &bufferQueryProfile);
-
     
     status |= clSetKernelArg(
             clKernel,
-            6,
+            5,
             sizeof(cl_mem),
             &tempBuffer);
 
     status |= clSetKernelArg(
             clKernel,
-            7,
+            6,
             sizeof(cl_ulong),
             &queryLengthInChunks);
 
-
-
     status |= clSetKernelArg(
             clKernel,
-            8,
+            7,
             sizeof(cl_mem),
             &bufferTexProfile);
 
@@ -987,7 +944,7 @@ int main(int argc, char* argv[])
     clReleaseKernel(clKernel);
     clReleaseProgram(program);
     clReleaseCommandQueue(cmdQueue);
-    clReleaseMemObject(bufferQueryProfile);
+    clReleaseMemObject(bufferTexProfile);
     clReleaseMemObject(bufferBlockOffsets);
     clReleaseMemObject(bufferScores);
     clReleaseContext(context);
