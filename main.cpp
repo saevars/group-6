@@ -579,11 +579,6 @@ int main(int argc, char* argv[])
             NULL,
             NULL);
 
-
-   // printf("h %s\n", ()sequences[0]);
-   /* printf("h %d\n", blockOffsets[2]);
-    printf("h %d\n", blockOffsets[3]);*/
-
     bufferSeqNums = clCreateBuffer(
             context,
             CL_MEM_READ_ONLY,
@@ -646,18 +641,6 @@ int main(int argc, char* argv[])
         printf("error in step 6, creating buffer for score array\n");
         exit(-1);
     }
-
-
-
-
-    /*    seqType* seque = &sequences[0];
-       seqType8 stype;
-       stype = *(seqType8*)seque;
-       //(11, 15, 18, 18, 18, 10, 9)
-   /*   __cl_char8 chars =stype.v8.z;
-
-       printf("seq %d\n", chars.xx);*/
-    //printf("sequences size %d\n", (int) (sizeof(sequences) / sizeof(seqType)));
 
     if(status != CL_SUCCESS){
         printf("error in step 6, creating buffer for numgroups\n");
@@ -825,12 +808,7 @@ int main(int argc, char* argv[])
     //Time the kernel yourself (look at OpenCL profiling)
 
     size_t globalWorkSize[2] = {noOfThreads, 1};
-   // globalWorkSize[0] = noOfThreads;//metadata.numSequences;//CL_DEVICE_MAX_WORK_ITEM_SIZES;
-   // globalWorkSize[1] = 1;// metadata.numSequences;
-
     size_t localWorkSize[2] = {localSize, 1};
-    //localWorkSize[0] = localSize;//metadata.numSequences;//CL_DEVICE_MAX_WORK_ITEM_SIZES;
-    //localWorkSize[1] = 1;// metadata.numSequences;*/
     cl_event kernelDone;
 
 
@@ -881,11 +859,14 @@ int main(int argc, char* argv[])
         exit(-1);
     }
 
-    
-
     printf("Total kernel execution time: %lu ns (%f seconds)\n", kernelEndTime - kernelStartTime, (float) (kernelEndTime - kernelStartTime) * 0.000000001);
 
-    //scoreType *result = (scoreType *)malloc(scoreArraySize);
+
+//------------------------------------------------------------------------
+    //--------------------------------------------------------------------
+    // STEP 11: Copy results back to host
+    //--------------------------------------------------------------------
+
     status = clEnqueueReadBuffer(
             cmdQueue,
             bufferScores,
@@ -903,15 +884,6 @@ int main(int argc, char* argv[])
 
         exit(-1);
     }
-
-    //printf("\nKernel computation Time (in ms) = %0.3f ms\n",  );
-
-//------------------------------------------------------------------------
-    //--------------------------------------------------------------------
-    // STEP 11: Copy results back to host
-    //--------------------------------------------------------------------
-
-
 
 //-------------------------------------------------------------------------
     //---------------------------------------------------------------------
@@ -947,6 +919,8 @@ int main(int argc, char* argv[])
     clReleaseMemObject(bufferTexProfile);
     clReleaseMemObject(bufferBlockOffsets);
     clReleaseMemObject(bufferScores);
+    clReleaseMemObject(bufferTexProfile);
+    clReleaseMemObject(bufferSeqNums);
     clReleaseContext(context);
 
 

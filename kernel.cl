@@ -17,9 +17,7 @@ char4 populateSubstScoreFromQueryProfile(read_only image2d_t queryProfileTex, ch
     scoreInChars.y = score.y;
     scoreInChars.z = score.z;
     scoreInChars.w = score.w;
-    if (j == 0 && a == 11) {
-    //    printf("pix %d %d %d %d\n", scoreInChars.x, scoreInChars.y, scoreInChars.z, scoreInChars.w);
-    }
+
     return scoreInChars;
 }
 
@@ -57,9 +55,6 @@ residue alignResidues(residue res, char4 substScore){
      return res;
 }
 
-/*
- * alignWithQuery((substType *)queryProfile, (seqType8) s,
-                       (TempData2*) tempColumn, (scoreType) maxScore, column);*/
 scoreType alignWithQuery(char8 s, global TempData2*  tempColumn, scoreType maxScore,
                         int column, seqNumType seqNum, const ulong queryLength,
         read_only image2d_t queryProfile){
@@ -103,11 +98,6 @@ scoreType alignWithQuery(char8 s, global TempData2*  tempColumn, scoreType maxSc
 
         res.top = (scoreType)top.a.x;
         res.IyTop = IyTop.lo.x;
-
-//        if (j == 0 && seqNum == 15){
-//            printf("j = 1; after maxscore = %d\n",
-//                   res.maxScore);
-//        }
 
         substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.lo.x, j);
         res2 = alignResidues((residue)res, (char4) substScores);
@@ -187,9 +177,6 @@ scoreType alignWithQuery(char8 s, global TempData2*  tempColumn, scoreType maxSc
         top.b.w = (scoreType)res.top;
         IyTop.hi.w = res.IyTop;
 
-
-
-
         topLeft = topLeftNext;
         maxScore = res.maxScore;
 
@@ -205,14 +192,9 @@ scoreType alignWithQuery(char8 s, global TempData2*  tempColumn, scoreType maxSc
         t.b.F = res.left.w;
         t.b.Ix = res.ixLeft.w;
         tempColumn[0]=t;
-     //   if (j == 0)printf("%d %d\n", tempColumn[0].a.Ix, t.a.Ix);
 
         tempColumn += noOfThreads;
 
-        if (j < 3){
-          // printf("%d\n", (int)res.maxScore);
-         //   printf("%d, %d, %d, %d\n", substScores.x, substScores.y, substScores.z, substScores.w);
-        }
     }
     return maxScore;
 }
@@ -266,9 +248,6 @@ void align(global seqType* sequence, global const TempData2* tempColumn, seqNumT
 }
 
 
-/*printf("%d %d %d %d ", s.a.x, s.a.y, s.a.z, s.a.w);
-        printf("%d %d %d %d ", s.b.x, s.b.y, s.b.z, s.b.w);
-        printf("%d %d %d %d\n", s.b.w, s.b.x, s.b.y, s.b.z);*/
 __kernel void clkernel( const unsigned long numGroups,
                         global scoreType *scores,
                         global  blockOffsetType * blockOffsets,
@@ -279,16 +258,15 @@ __kernel void clkernel( const unsigned long numGroups,
                                 read_only image2d_t queryProfileTex
 ){
 
-    //printf("numGroups %d \n", numGroups);
     int idx = get_global_id(0);
     int groupNum = idx;
 
     __global const TempData2 *tempColumn = &tempColumns[idx];
 
     while  (groupNum < numGroups){
-if(groupNum == 0){
-printf("thread 0\n");
-}
+        if(groupNum == 0){
+            printf("thread 0\n");
+        }
         seqNumType seqNum=seqNums[groupNum];
 
         int seqBlock = groupNum >> LOG2_BLOCKSIZE;
