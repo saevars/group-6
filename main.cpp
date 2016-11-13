@@ -602,11 +602,6 @@ int main(int argc, char* argv[])
             NULL,
             NULL);
 
-
-   // printf("h %s\n", ()sequences[0]);
-   /* printf("h %d\n", blockOffsets[2]);
-    printf("h %d\n", blockOffsets[3]);*/
-
     bufferSeqNums = clCreateBuffer(
             context,
             CL_MEM_READ_ONLY,
@@ -858,12 +853,8 @@ int main(int argc, char* argv[])
     //Time the kernel yourself (look at OpenCL profiling)
 
     size_t globalWorkSize[2] = {noOfThreads, 1};
-   // globalWorkSize[0] = noOfThreads;//metadata.numSequences;//CL_DEVICE_MAX_WORK_ITEM_SIZES;
-   // globalWorkSize[1] = 1;// metadata.numSequences;
 
     size_t localWorkSize[2] = {localSize, 1};
-    //localWorkSize[0] = localSize;//metadata.numSequences;//CL_DEVICE_MAX_WORK_ITEM_SIZES;
-    //localWorkSize[1] = 1;// metadata.numSequences;*/
     cl_event kernelDone;
 
 
@@ -918,7 +909,14 @@ int main(int argc, char* argv[])
 
     printf("Total kernel execution time: %lu ns (%f seconds)\n", kernelEndTime - kernelStartTime, (float) (kernelEndTime - kernelStartTime) * 0.000000001);
 
-    //scoreType *result = (scoreType *)malloc(scoreArraySize);
+
+    //printf("\nKernel computation Time (in ms) = %0.3f ms\n",  );
+
+//------------------------------------------------------------------------
+    //--------------------------------------------------------------------
+    // STEP 11: Copy results back to host
+    //--------------------------------------------------------------------
+
     status = clEnqueueReadBuffer(
             cmdQueue,
             bufferScores,
@@ -937,15 +935,6 @@ int main(int argc, char* argv[])
         exit(-1);
     }
 
-    //printf("\nKernel computation Time (in ms) = %0.3f ms\n",  );
-
-//------------------------------------------------------------------------
-    //--------------------------------------------------------------------
-    // STEP 11: Copy results back to host
-    //--------------------------------------------------------------------
-
-
-
 //-------------------------------------------------------------------------
     //---------------------------------------------------------------------
     // Sort scores and print results
@@ -960,7 +949,6 @@ int main(int argc, char* argv[])
         sortScores[i].score = scores[i];
     }
     free(scores);
-  //  free(result);
     std::sort(sortScores.begin(),sortScores.end(),&resultComparisonFunc);
     
     //Display results
@@ -980,6 +968,8 @@ int main(int argc, char* argv[])
     clReleaseMemObject(bufferQueryProfile);
     clReleaseMemObject(bufferBlockOffsets);
     clReleaseMemObject(bufferScores);
+    clReleaseMemObject(bufferQueryProfile);
+    clReleaseMemObject(bufferSeqNums);
     clReleaseContext(context);
 
 

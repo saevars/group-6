@@ -51,9 +51,6 @@ residue alignResidues(residue res, char4 substScore){
      return res;
 }
 
-/*
- * alignWithQuery((substType *)queryProfile, (seqType8) s,
-                       (TempData2*) tempColumn, (scoreType) maxScore, column);*/
 scoreType alignWithQuery(global substType *queryProfile, char8 s, global TempData2*  tempColumn, scoreType maxScore,
                         int column, seqNumType seqNum, const ulong queryLength, const ulong queryLengthInChunks){
 
@@ -96,11 +93,6 @@ scoreType alignWithQuery(global substType *queryProfile, char8 s, global TempDat
 
         res.top = (scoreType)top.a.x;
         res.IyTop = IyTop.lo.x;
-
-//        if (j == 0 && seqNum == 15){
-//            printf("j = 1; after maxscore = %d\n",
-//                   res.maxScore);
-//        }
 
         substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.lo.x, j, queryLength);
         res2 = alignResidues((residue)res, (char4) substScores);
@@ -174,13 +166,6 @@ scoreType alignWithQuery(global substType *queryProfile, char8 s, global TempDat
         res2.top = (scoreType)top.b.w;
         res2.IyTop = IyTop.hi.w;
 
-        /*if (j == 1){
-            printf("before maxscore = %d, left = {%d, %d, %d, %d}, ixLeft = {%d, %d, %d, %d}, top = %d, topLeft = %d, IyTop = %d\n",
-                   res2.maxScore, res2.left.x, res2.left.y, res2.left.z, res2.left.w,
-                   res2.ixLeft.x,res2.ixLeft.y,res2.ixLeft.z,res2.ixLeft.w,
-                   res2.top, res2.topLeft, res2.IyTop);
-        }*/
-
         substScores = (char4) populateSubstScoreFromQueryProfile(queryProfile, s.hi.w, j, queryLength);
         res = alignResidues((residue)res2, (char4) substScores);
 
@@ -205,14 +190,9 @@ scoreType alignWithQuery(global substType *queryProfile, char8 s, global TempDat
         t.b.F = res.left.w;
         t.b.Ix = res.ixLeft.w;
         tempColumn[0]=t;
-     //   if (j == 0)printf("%d %d\n", tempColumn[0].a.Ix, t.a.Ix);
+
 
         tempColumn += noOfThreads;
-
-        if (j < 3){
-          // printf("%d\n", (int)res.maxScore);
-         //   printf("%d, %d, %d, %d\n", substScores.x, substScores.y, substScores.z, substScores.w);
-        }
     }
     return maxScore;
 }
@@ -234,17 +214,6 @@ void align(global seqType* sequence, global const TempData2* tempColumn, seqNumT
     s.hi.y = * tempSeq++;
     s.hi.z = * tempSeq++;
     s.hi.w = * tempSeq++;
-
-//    if (seqNum == 0){
-//        printf("s.lo.x = %d \n", s.lo.x);
-//        printf("s.lo.y = %d \n", s.lo.y);
-//        printf("s.lo.z = %d \n", s.lo.z);
-//        printf("s.lo.w = %d \n", s.lo.w);
-//        printf("s.hi.x = %d \n", s.hi.x);
-//        printf("s.hi.y = %d \n", s.hi.y);
-//        printf("s.hi.z = %d \n", s.hi.z);
-//        printf("s.hi.w = %d \n\n", s.hi.w);
-//}
 
     while(s.lo.x!=' ') //Until terminating subblock
     {
@@ -271,17 +240,6 @@ void align(global seqType* sequence, global const TempData2* tempColumn, seqNumT
         s.hi.y = * tempSeq++;
         s.hi.z = * tempSeq++;
         s.hi.w = * tempSeq++;
-
-//        if (seqNum == 0){
-//            printf("s.lo.x = %d \n", s.lo.x);
-//            printf("s.lo.y = %d \n", s.lo.y);
-//            printf("s.lo.z = %d \n", s.lo.z);
-//            printf("s.lo.w = %d \n", s.lo.w);
-//            printf("s.hi.x = %d \n", s.hi.x);
-//            printf("s.hi.y = %d \n", s.hi.y);
-//            printf("s.hi.z = %d \n", s.hi.z);
-//            printf("s.hi.w = %d \n\n", s.hi.w);
-//        }
     }
 
         scores[seqNum] = maxScore;
@@ -290,9 +248,6 @@ void align(global seqType* sequence, global const TempData2* tempColumn, seqNumT
 }
 
 
-/*printf("%d %d %d %d ", s.a.x, s.a.y, s.a.z, s.a.w);
-        printf("%d %d %d %d ", s.b.x, s.b.y, s.b.z, s.b.w);
-        printf("%d %d %d %d\n", s.b.w, s.b.x, s.b.y, s.b.z);*/
 __kernel void clkernel( const unsigned long numGroups,
                         global scoreType *scores,
                         global  blockOffsetType * blockOffsets,
@@ -304,7 +259,6 @@ __kernel void clkernel( const unsigned long numGroups,
                         const unsigned long queryLengthInChunks
 ){
 
-    //printf("numGroups %d \n", numGroups);
     int idx = get_global_id(0);
     int groupNum = idx;
 
